@@ -8,7 +8,7 @@ uniform sampler2D normal_map ;       // for little wave‐normal details
 // pick your blue in the inspector:
 uniform vec3    water_color   : source_color       = vec3(0.0, 0.3, 0.7);
 // control transparency in the inspector:
-uniform float   water_alpha   : hint_range(0.0, 1.0) = 0.6;
+uniform float   water_alpha   : hint_range(0.0, 1.0) = 0.5;
 
 void fragment() {
     // flat‐colored water:
