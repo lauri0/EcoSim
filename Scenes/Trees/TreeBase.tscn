@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3 uid="uid://f1bdslo3oyuj"]
+
+[ext_resource type="Script" uid="uid://dapbxpwg7g8ls" path="res://Scripts/TreeBase.gd" id="1_2cvnp"]
+[ext_resource type="ArrayMesh" uid="uid://cmfg8f3xspg0e" path="res://Resources/Meshes/Trees/willow.tres" id="2_jxmhm"]
+
+[node name="TreeBase" type="Node3D"]
+script = ExtResource("1_2cvnp")
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(100, 0, 0, 0, -4.37114e-06, 100, 0, -100, -4.37114e-06, 0, 0, 0)
+mesh = ExtResource("2_jxmhm")

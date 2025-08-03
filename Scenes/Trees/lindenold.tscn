@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://ba34u8377r23m"]
+
+[ext_resource type="ArrayMesh" uid="uid://c11tlxgxitfhv" path="res://Resources/Meshes/Trees/linden.tres" id="1_4fdgc"]
+[ext_resource type="Material" uid="uid://d2pnvt6m8qhj7" path="res://Resources/Materials/Oak Leaves.tres" id="2_iuppf"]
+
+[node name="Linden" type="MeshInstance3D"]
+transform = Transform3D(100, 0, 0, 0, 0, 100, 0, -100, 0, 0, 0, 0)
+mesh = ExtResource("1_4fdgc")
+skeleton = NodePath("")
+surface_material_override/1 = ExtResource("2_iuppf")

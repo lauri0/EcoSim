@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://2g8gu404s73k"]
+
+[ext_resource type="ArrayMesh" uid="uid://bjbl06mk2f76l" path="res://Resources/Meshes/Trees/poplar.tres" id="1_kb6ep"]
+
+[node name="Poplar" type="MeshInstance3D"]
+transform = Transform3D(100, 0, 0, 0, 0, 100, 0, -100, 0, 0, 0, 0)
+mesh = ExtResource("1_kb6ep")
+skeleton = NodePath("")
