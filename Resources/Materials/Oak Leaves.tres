@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://d2pnvt6m8qhj7"]
+
+[resource]
+resource_name = "Oak Leaves"
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.364706, 0.568627, 0.435294, 1)
+emission_enabled = true

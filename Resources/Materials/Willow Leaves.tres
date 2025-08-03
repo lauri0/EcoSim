@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://cou3gyxerx84m"]
+
+[resource]
+resource_name = "Willow Leaves"
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.523527, 0.772549, 0.215456, 1)
+emission_enabled = true

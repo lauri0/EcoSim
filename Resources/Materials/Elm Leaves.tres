@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://crli0x4gfjulx"]
+
+[resource]
+resource_name = "Elm Leaves"
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.286539, 0.457657, 0.105543, 1)
+emission_enabled = true

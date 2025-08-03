@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://bcxg1k6ccg4kg"]
+
+[resource]
+resource_name = "Lindon Leaves"
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.423529, 0.636605, 0.232688, 1)
+emission_enabled = true

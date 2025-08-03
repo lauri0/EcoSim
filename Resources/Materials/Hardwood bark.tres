@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://wje8m70r8olj"]
+
+[resource]
+resource_name = "Hardwood bark"
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.441849, 0.245, 0.00716697, 1)
+emission_enabled = true
