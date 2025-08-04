@@ -1,14 +1,23 @@
-[gd_scene load_steps=5 format=3 uid="uid://d2foofg8mioj6"]
+[gd_scene load_steps=6 format=3 uid="uid://d2foofg8mioj6"]
 
 [ext_resource type="PackedScene" uid="uid://f1bdslo3oyuj" path="res://Scenes/Trees/TreeBase.tscn" id="1_sylie"]
 [ext_resource type="ArrayMesh" uid="uid://bwh61g30bcgbs" path="res://Resources/Meshes/Trees/spruce.tres" id="2_4b1qr"]
 [ext_resource type="Material" uid="uid://c2nhtyi02xds5" path="res://Resources/Materials/Spruce Bark.tres" id="3_rld2e"]
 [ext_resource type="Material" uid="uid://brqa8a4im5r30" path="res://Resources/Materials/Spruce Leaves.tres" id="4_0cesr"]
 
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_4b1qr"]
+
 [node name="TreeBase" instance=ExtResource("1_sylie")]
 species_name = "Spruce"
 
 [node name="MeshInstance3D" parent="Model" index="0"]
+transform = Transform3D(165, 0, 0, 0, -7.21238e-06, 165, 0, -165, -7.21238e-06, 0, 0, 0)
 mesh = ExtResource("2_4b1qr")
 surface_material_override/0 = ExtResource("3_rld2e")
 surface_material_override/1 = ExtResource("4_0cesr")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, 3, 0)
+shape = SubResource("CylinderShape3D_4b1qr")

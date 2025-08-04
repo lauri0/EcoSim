@@ -1,12 +1,21 @@
-[gd_scene load_steps=4 format=3 uid="uid://dgddqqaskds5f"]
+[gd_scene load_steps=5 format=3 uid="uid://dgddqqaskds5f"]
 
 [ext_resource type="PackedScene" uid="uid://f1bdslo3oyuj" path="res://Scenes/Trees/TreeBase.tscn" id="1_8qm6t"]
 [ext_resource type="ArrayMesh" uid="uid://c4v56wguvvf2q" path="res://Resources/Meshes/Trees/aspen.tres" id="2_lh3mu"]
 [ext_resource type="Material" uid="uid://b1ljh73e7v4gy" path="res://Resources/Materials/Aspen Bark.tres" id="3_wvxbj"]
 
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_8qm6t"]
+
 [node name="TreeBase" instance=ExtResource("1_8qm6t")]
 species_name = "Aspen"
 
 [node name="MeshInstance3D" parent="Model" index="0"]
+transform = Transform3D(150, 0, 0, 0, -6.55671e-06, 150, 0, -150, -6.55671e-06, 0, 0, 0)
 mesh = ExtResource("2_lh3mu")
 surface_material_override/0 = ExtResource("3_wvxbj")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(2.8, 0, 0, 0, 2.8, 0, 0, 0, 2.8, 0, 2.8, 0)
+shape = SubResource("CylinderShape3D_8qm6t")

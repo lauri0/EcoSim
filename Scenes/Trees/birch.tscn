@@ -1,10 +1,19 @@
-[gd_scene load_steps=3 format=3 uid="uid://vhml36nwt41x"]
+[gd_scene load_steps=4 format=3 uid="uid://vhml36nwt41x"]
 
 [ext_resource type="PackedScene" uid="uid://f1bdslo3oyuj" path="res://Scenes/Trees/TreeBase.tscn" id="1_bgu1d"]
 [ext_resource type="ArrayMesh" uid="uid://bw40gk8kxowha" path="res://Resources/Meshes/Trees/birch.tres" id="2_o4u0t"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_o4u0t"]
 
 [node name="TreeBase" instance=ExtResource("1_bgu1d")]
 species_name = "Birch"
 
 [node name="MeshInstance3D" parent="Model" index="0"]
+transform = Transform3D(135, 0, 0, 0, -5.90104e-06, 135, 0, -135, -5.90104e-06, 0, 0, 0)
 mesh = ExtResource("2_o4u0t")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(2.6, 0, 0, 0, 2.6, 0, 0, 0, 2.6, 0, 2.6, 0)
+shape = SubResource("CylinderShape3D_o4u0t")

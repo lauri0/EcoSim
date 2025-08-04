@@ -1,8 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://cxyvrpevmegfi"]
-
-[ext_resource type="ArrayMesh" uid="uid://colubwdemk04b" path="res://Resources/Meshes/Trees/maple.tres" id="1_sapje"]
-
-[node name="Maple" type="MeshInstance3D"]
-transform = Transform3D(100, 0, 0, 0, 0, 100, 0, -100, 0, 0, 0, 0)
-mesh = ExtResource("1_sapje")
-skeleton = NodePath("")

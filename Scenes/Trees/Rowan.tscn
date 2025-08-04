@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://bkwkr4i141inj"]
+
+[ext_resource type="PackedScene" uid="uid://f1bdslo3oyuj" path="res://Scenes/Trees/TreeBase.tscn" id="1_u6owb"]
+[ext_resource type="ArrayMesh" uid="uid://bjbl06mk2f76l" path="res://Resources/Meshes/Trees/poplar.tres" id="2_jl3i4"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_u6owb"]
+
+[node name="TreeBase" instance=ExtResource("1_u6owb")]
+species_name = "Rowan"
+
+[node name="MeshInstance3D" parent="Model" index="0"]
+transform = Transform3D(105, 0, 0, 0, -4.5897e-06, 105, 0, -105, -4.5897e-06, 0, 0, 0)
+mesh = ExtResource("2_jl3i4")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 2, 0)
+shape = SubResource("CylinderShape3D_u6owb")

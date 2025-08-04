@@ -1,8 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://cm7rhn8xjvlax"]
-
-[ext_resource type="ArrayMesh" uid="uid://bw40gk8kxowha" path="res://Resources/Meshes/Trees/birch.tres" id="1_pg855"]
-
-[node name="Birch" type="MeshInstance3D"]
-transform = Transform3D(100, 0, 0, 0, 0, 100, 0, -100, 0, 0, 0, 0)
-mesh = ExtResource("1_pg855")
-skeleton = NodePath("")
