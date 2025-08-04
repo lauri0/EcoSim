@@ -8,6 +8,5 @@
 species_name = "Aspen"
 
 [node name="MeshInstance3D" parent="Model" index="0"]
-transform = Transform3D(100, 0, 0, 0, -4.37114e-06, 100, 0, -100, -4.37114e-06, 0, 0, 0)
 mesh = ExtResource("2_lh3mu")
 surface_material_override/0 = ExtResource("3_wvxbj")
