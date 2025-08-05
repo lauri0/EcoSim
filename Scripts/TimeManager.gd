@@ -2,7 +2,7 @@
 extends Node
 
 # Time configuration
-var year_duration_seconds: float = 60.0  # 1 minute = 1 year
+var year_duration_seconds: float = 360.0  # 6 minutes = 1 year
 var days_per_year: int = 4  # 4 seasons = 4 days
 var hours_per_day: int = 24
 
@@ -17,7 +17,7 @@ var season_names: Array[String] = ["Spring", "Summer", "Autumn", "Winter"]
 # Light control
 var directional_light: DirectionalLight3D
 var base_light_energy: float = 0.4
-var min_light_energy: float = 0.0  # Night time minimum
+var min_light_energy: float = 0.3  # Night time minimum
 var max_light_energy: float = 0.9   # Day time maximum
 
 # Time calculation helpers
@@ -26,6 +26,10 @@ var hour_duration_seconds: float
 
 # Signals for UI updates
 signal time_updated(year: int, season: String, hour: int)
+signal season_changed(season: String, winter_factor: float)
+
+# References to world objects
+var terrain_mesh: MeshInstance3D
 
 func _ready():
 	# Calculate time durations
@@ -47,12 +51,20 @@ func _find_directional_light():
 	# Find the DirectionalLight3D in the scene tree
 	var root = get_tree().current_scene
 	directional_light = root.find_child("DirectionalLight3D", true, false) as DirectionalLight3D
+	terrain_mesh = root.find_child("Terrain", true, false) as MeshInstance3D
 	
 	if directional_light:
 		base_light_energy = directional_light.light_energy
 		print("Found DirectionalLight3D with base energy: ", base_light_energy)
 	else:
 		print("Warning: DirectionalLight3D not found in scene!")
+	
+	if terrain_mesh:
+		print("Found Terrain mesh for winter effects")
+	else:
+		print("Warning: Terrain mesh not found in scene!")
+
+# Removed _last_season as it's not needed for current implementation
 
 func _process(delta):
 	# Update current time
@@ -61,6 +73,7 @@ func _process(delta):
 	# Handle hour overflow (new day)
 	if current_hour >= hours_per_day:
 		current_hour = 0.0
+		var old_day = current_day
 		current_day += 1
 		
 		# Handle day overflow (new year)
@@ -68,9 +81,16 @@ func _process(delta):
 			current_day = 0
 			current_year += 1
 			print("New year! Year ", current_year)
+		
+		# Check for season change
+		if old_day != current_day:
+			_on_season_changed()
 	
 	# Update lighting based on current time
 	_update_lighting()
+	
+	# Update terrain winter effect
+	_update_terrain_winter_effect()
 	
 	# Emit signal for UI updates (only emit when hour changes to avoid spam)
 	var hour_int = int(current_hour)
@@ -90,21 +110,18 @@ func _update_lighting():
 	
 	var time_factor: float
 	
-	if current_hour >= 6.0 and current_hour <= 22.0:
-		# Daytime (6:00 to 22:00) - 16 hours
-		# Use cosine curve centered on noon (12:00) with extended bright period
-		var day_progress = (current_hour - 6.0) / 16.0  # 0 to 1 over the day
+	if current_hour >= 5.0 and current_hour <= 21.0:
+		# Daytime (5:00 to 21:00) - 16 hours
+		# Use cosine curve centered on noon (13:00) with extended bright period
+		var day_progress = (current_hour - 5.0) / 16.0  # 0 to 1 over the day
 		var noon_centered = (day_progress - 0.5) * 2.0  # -1 to 1, centered on noon
-		time_factor = cos(noon_centered * PI * 0.7)  # Gentler curve for longer bright time
+		time_factor = cos(noon_centered * PI)  # Gentler curve for longer bright time
 		time_factor = (time_factor + 1.0) / 2.0  # 0 to 1
-		time_factor = pow(time_factor, 0.6)  # Softer falloff, keeps it brighter longer
-		
-		# Ensure minimum brightness during day transitions
-		time_factor = max(time_factor, 0.4)  # Never go below 15% during day
+		time_factor = pow(time_factor, 0.4)  # Softer falloff, keeps it brighter longer
 	else:
-		# Nighttime (22:00 to 6:00) - 8 hours
+		# Nighttime (21:00 to 5:00) - 8 hours
 		# Keep lighting consistently low
-		time_factor = 0.4
+		time_factor = 0.0
 	
 	# Map to light energy range
 	var target_energy = min_light_energy + (max_light_energy - min_light_energy) * time_factor
@@ -115,6 +132,9 @@ func _update_lighting():
 # Utility functions for getting current time info
 func get_current_season() -> String:
 	return season_names[current_day]
+
+func get_current_winter_factor() -> float:
+	return 1.0 if current_day == 3 else 0.0  # Winter is day 3 (index 3)
 
 func get_current_hour_int() -> int:
 	return int(current_hour)
@@ -142,6 +162,21 @@ func set_time_scale(scale: float):
 	hour_duration_seconds = day_duration_seconds / hours_per_day
 	print("Time scale set to ", scale, "x (", year_duration_seconds, " seconds per year)")
 
+func _on_season_changed():
+	var season_name = season_names[current_day]
+	var winter_factor = 1.0 if current_day == 3 else 0.0  # Winter is day 3 (index 3)
+	season_changed.emit(season_name, winter_factor)
+	print("Season changed to: ", season_name, " (winter factor: ", winter_factor, ")")
+
+func _update_terrain_winter_effect():
+	if not terrain_mesh or not terrain_mesh.material_override:
+		return
+	
+	var material = terrain_mesh.material_override as ShaderMaterial
+	if material:
+		var winter_factor = 1.0 if current_day == 3 else 0.0  # Winter is day 3
+		material.set_shader_parameter("winter_factor", winter_factor)
+
 func _connect_to_ui():
 	# Find UI components and connect to them
 	var root = get_tree().current_scene
@@ -154,5 +189,8 @@ func _connect_to_ui():
 		
 		# Initialize the UI with current time
 		ui_panel._on_time_updated(current_year, season_names[current_day], int(current_hour))
+		
+		# Initialize terrain winter effect
+		_update_terrain_winter_effect()
 	else:
 		print("Warning: Could not find UIPanel or _on_time_updated method!")

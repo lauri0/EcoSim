@@ -8,6 +8,11 @@
 
 [node name="TreeBase" instance=ExtResource("1_ude77")]
 species_name = "Maple"
+seed_count_per_cycle = 12
+seed_type = "winged"
+seed_size = 0.12
+seed_mass = 0.0005
+seed_wind_sensitivity = 2.0
 
 [node name="MeshInstance3D" parent="Model" index="0"]
 transform = Transform3D(135, 0, 0, 0, -5.90104e-06, 135, 0, -135, -5.90104e-06, 0, 0, 0)

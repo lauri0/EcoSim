@@ -7,6 +7,10 @@
 
 [node name="Tree" instance=ExtResource("1_v6ed1")]
 species_name = "Willow"
+seed_count_per_cycle = 20
+seed_size = 0.03
+seed_mass = 0.0002
+seed_wind_sensitivity = 2.5
 metadata/_edit_lock_ = true
 metadata/_edit_group_ = true
 

@@ -60,8 +60,9 @@ func _input(event: InputEvent) -> void:
 			_safe_translate(right * -event.relative.x * pan_speed)
 			_safe_translate(Vector3(0,1,0) * event.relative.y * pan_speed)
 
-func _process(delta: float) -> void:
-	# 1) Compute your horizontal “forward” (where camera is looking) and “right” vectors:
+func _physics_process(delta: float) -> void:
+	# Use physics process which uses unscaled delta time (unaffected by Engine.time_scale)
+	# 1) Compute your horizontal "forward" (where camera is looking) and "right" vectors:
 	var forward = -transform.basis.z
 	forward.y = 0
 	forward = forward.normalized()

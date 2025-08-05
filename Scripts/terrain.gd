@@ -21,6 +21,10 @@ const size := 256.0
 		material_override.set_shader_parameter("height", height * 2.0)
 		update_mesh()
 
+# Collision components
+var static_body: StaticBody3D
+var collision_shape: CollisionShape3D
+
 func get_height(x: float, y: float) -> float:
 	return (noise.get_noise_2d(x, y) * height) + 5.0
 
@@ -61,3 +65,39 @@ func update_mesh() -> void:
 	var array_mesh := ArrayMesh.new()
 	array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, plane_arrays)
 	mesh = array_mesh
+	
+	# Update collision shape
+	_update_collision_shape(array_mesh)
+
+func _ready():
+	# Set up collision components
+	_setup_collision()
+	
+	# Call update_mesh to initialize everything
+	if not Engine.is_editor_hint():
+		call_deferred("update_mesh")
+
+func _setup_collision():
+	# Create StaticBody3D for collision
+	static_body = StaticBody3D.new()
+	static_body.name = "TerrainCollision"
+	add_child(static_body)
+	
+	# Create CollisionShape3D
+	collision_shape = CollisionShape3D.new()
+	collision_shape.name = "TerrainCollisionShape"
+	static_body.add_child(collision_shape)
+	
+	print("Terrain collision components created")
+
+func _update_collision_shape(array_mesh: ArrayMesh):
+	if not collision_shape:
+		return
+	
+	# Create a trimesh collision shape from the mesh
+	var trimesh_shape = array_mesh.create_trimesh_shape()
+	if trimesh_shape:
+		collision_shape.shape = trimesh_shape
+		print("Terrain collision shape updated with ", array_mesh.surface_get_array_len(0), " vertices")
+	else:
+		print("Failed to create terrain collision shape")

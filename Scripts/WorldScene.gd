@@ -8,4 +8,9 @@ func _ready():
 	time_manager.name = "TimeManager"
 	add_child(time_manager)
 	
-	print("TimeManager added to world scene")
+	# Create and add WindManager to the scene
+	var wind_manager = preload("res://Scripts/WindManager.gd").new()
+	wind_manager.name = "WindManager"
+	add_child(wind_manager)
+	
+	print("TimeManager and WindManager added to world scene")

@@ -9,6 +9,11 @@
 
 [node name="TreeBase" instance=ExtResource("1_sylie")]
 species_name = "Spruce"
+seed_count_per_cycle = 10
+seed_type = "cone"
+seed_size = 0.06
+seed_mass = 0.0006
+seed_wind_sensitivity = 0.9
 
 [node name="MeshInstance3D" parent="Model" index="0"]
 transform = Transform3D(165, 0, 0, 0, -7.21238e-06, 165, 0, -165, -7.21238e-06, 0, 0, 0)

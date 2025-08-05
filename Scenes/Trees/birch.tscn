@@ -7,6 +7,11 @@
 
 [node name="TreeBase" instance=ExtResource("1_bgu1d")]
 species_name = "Birch"
+seed_count_per_cycle = 15
+seed_type = "ovoid"
+seed_size = 0.05
+seed_mass = 0.0003
+seed_wind_sensitivity = 1.5
 
 [node name="MeshInstance3D" parent="Model" index="0"]
 transform = Transform3D(135, 0, 0, 0, -5.90104e-06, 135, 0, -135, -5.90104e-06, 0, 0, 0)

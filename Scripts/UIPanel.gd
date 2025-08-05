@@ -8,6 +8,15 @@ extends Panel
 @onready var selected_label: Label = $MenuBar/SelectedLabel if has_node("MenuBar/SelectedLabel") else null
 # Date label to show current time
 @onready var date_label: Label = $MenuBar/DateLabel if has_node("MenuBar/DateLabel") else null
+# Speed label to show current speed
+@onready var speed_label: Label = $MenuBar/SpeedLabel if has_node("MenuBar/SpeedLabel") else null
+
+# Speed control buttons
+@onready var speed_0x_button: Button = get_node("MenuBar/0XButton") if has_node("MenuBar/0XButton") else null
+@onready var speed_1x_button: Button = get_node("MenuBar/1XButton") if has_node("MenuBar/1XButton") else null
+@onready var speed_2x_button: Button = get_node("MenuBar/2XButton") if has_node("MenuBar/2XButton") else null
+@onready var speed_5x_button: Button = get_node("MenuBar/5XButton") if has_node("MenuBar/5XButton") else null
+@onready var speed_10x_button: Button = get_node("MenuBar/10XButton") if has_node("MenuBar/10XButton") else null
 
 # Tree inspection popup - will be created dynamically
 var tree_info_popup: PopupPanel
@@ -21,6 +30,9 @@ var species_list = ["Alder","Aspen","Birch","Linden","Maple","Oak","Pine","Rowan
 # Tree spawning state
 var selected_tree_species: String = ""
 var is_tree_spawn_mode: bool = false
+
+# Speed control state
+var current_time_scale: float = 1.0
 
 # References to world objects (set from world scene)
 var camera: Camera3D
@@ -49,6 +61,9 @@ func _ready():
 	
 	# 6) Create tree inspection popup (deferred to avoid busy parent)
 	_create_tree_info_popup.call_deferred()
+	
+	# 7) Connect speed control buttons
+	_connect_speed_buttons()
 
 func _find_world_references():
 	# Find camera and terrain in the scene tree
@@ -97,6 +112,10 @@ func _on_trees_popup_item(id: int):
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		# Check if mouse is over UI elements before processing terrain clicks
+		if _is_mouse_over_ui(event.position):
+			return  # Don't process terrain clicks when over UI
+			
 		if is_tree_spawn_mode and selected_tree_species != "":
 			# Tree spawning mode
 			_spawn_tree_at_mouse_position(event.position)
@@ -105,6 +124,10 @@ func _input(event: InputEvent) -> void:
 			# Tree inspection mode
 			_try_inspect_tree_at_mouse_position(event.position)
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+		# Check if mouse is over UI elements before processing terrain clicks
+		if _is_mouse_over_ui(event.position):
+			return  # Don't process terrain clicks when over UI
+			
 		if is_tree_spawn_mode:
 			# Right click cancels spawn mode
 			_cancel_tree_spawn_mode()
@@ -383,3 +406,94 @@ func _on_time_updated(year: int, season: String, hour: int):
 		date_label.text = "%02d:00 %s Year %d" % [hour, season, year]
 	else:
 		print("Warning: DateLabel not found!")
+
+# Speed control functions
+func _connect_speed_buttons():
+	# Connect all speed control buttons
+	if speed_0x_button:
+		speed_0x_button.pressed.connect(_on_speed_0x_pressed)
+	if speed_1x_button:
+		speed_1x_button.pressed.connect(_on_speed_1x_pressed)
+	if speed_2x_button:
+		speed_2x_button.pressed.connect(_on_speed_2x_pressed)
+	if speed_5x_button:
+		speed_5x_button.pressed.connect(_on_speed_5x_pressed)
+	if speed_10x_button:
+		speed_10x_button.pressed.connect(_on_speed_10x_pressed)
+	
+	# Set initial visual state (1x should be pressed by default)
+	_update_speed_button_states(1.0)
+	_update_speed_label(1.0)
+
+func _on_speed_0x_pressed():
+	_set_time_scale(0.0)
+
+func _on_speed_1x_pressed():
+	_set_time_scale(1.0)
+
+func _on_speed_2x_pressed():
+	_set_time_scale(2.0)
+
+func _on_speed_5x_pressed():
+	_set_time_scale(5.0)
+
+func _on_speed_10x_pressed():
+	_set_time_scale(10.0)
+
+func _set_time_scale(time_scale: float):
+	current_time_scale = time_scale
+	Engine.time_scale = time_scale
+	_update_speed_button_states(time_scale)
+	_update_speed_label(time_scale)
+	
+	if time_scale == 0.0:
+		print("Game paused")
+	else:
+		print("Time scale set to ", time_scale, "x")
+
+func _update_speed_button_states(current_scale: float):
+	# Update button pressed states to show current speed
+	if speed_0x_button:
+		speed_0x_button.button_pressed = (current_scale == 0.0)
+	if speed_1x_button:
+		speed_1x_button.button_pressed = (current_scale == 1.0)
+	if speed_2x_button:
+		speed_2x_button.button_pressed = (current_scale == 2.0)
+	if speed_5x_button:
+		speed_5x_button.button_pressed = (current_scale == 5.0)
+	if speed_10x_button:
+		speed_10x_button.button_pressed = (current_scale == 10.0)
+
+func _update_speed_label(current_scale: float):
+	# Update speed label to show current speed
+	if speed_label:
+		if current_scale == 0.0:
+			speed_label.text = "Speed: PAUSED"
+		else:
+			# Format the speed nicely (remove .0 for whole numbers)
+			var speed_text = str(current_scale)
+			if current_scale == int(current_scale):
+				speed_text = str(int(current_scale))
+			speed_label.text = "Speed: " + speed_text + "X"
+
+# UI detection function
+func _is_mouse_over_ui(mouse_position: Vector2) -> bool:
+	# Check if mouse is over this panel (MenuBar area)
+	var panel_rect = get_global_rect()
+	if panel_rect.has_point(mouse_position):
+		return true
+	
+	# Check if any popup menus are visible and mouse is over them
+	if trees_popup and trees_popup.visible:
+		var popup_rect = trees_popup.get_visible_rect()
+		if popup_rect.has_point(mouse_position):
+			return true
+	
+	# Check if tree info popup is visible and mouse is over it
+	if tree_info_popup and tree_info_popup.visible:
+		##var info_popup_rect = Rect2(tree_info_popup.global_position, tree_info_popup.size)
+		var info_popup_rect = tree_info_popup.get_visible_rect()
+		if info_popup_rect.has_point(mouse_position):
+			return true
+	
+	return false
