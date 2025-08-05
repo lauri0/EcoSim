@@ -6,6 +6,8 @@ extends Panel
 @onready var trees_popup  = $TreesPopup
 # Optional label to show selected species - add a Label node as child of MenuBar named "SelectedLabel"
 @onready var selected_label: Label = $MenuBar/SelectedLabel if has_node("MenuBar/SelectedLabel") else null
+# Date label to show current time
+@onready var date_label: Label = $MenuBar/DateLabel if has_node("MenuBar/DateLabel") else null
 
 # Tree inspection popup - will be created dynamically
 var tree_info_popup: PopupPanel
@@ -24,8 +26,8 @@ var is_tree_spawn_mode: bool = false
 var camera: Camera3D
 var terrain: MeshInstance3D
 
-# Water level configuration
-@export var water_level: float = 0.0  # Y coordinate of water surface
+# Water level configuration  
+@export var water_level: float = 0.0  # Y coordinate of water surface (now aligned with WaterPlane at 0m)
 
 func _ready():
 	exit_button.pressed.connect(_on_exit_pressed)
@@ -374,3 +376,10 @@ func _on_popup_hide():
 	currently_inspected_tree = null
 	if popup_update_timer:
 		popup_update_timer.stop()
+
+func _on_time_updated(year: int, season: String, hour: int):
+	# Update the date label when time changes (called by TimeManager)
+	if date_label:
+		date_label.text = "%02d:00 %s Year %d" % [hour, season, year]
+	else:
+		print("Warning: DateLabel not found!")

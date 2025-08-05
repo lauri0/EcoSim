@@ -22,7 +22,7 @@ const size := 256.0
 		update_mesh()
 
 func get_height(x: float, y: float) -> float:
-	return noise.get_noise_2d(x, y) * height
+	return (noise.get_noise_2d(x, y) * height) + 5.0
 
 func get_normal(x: float, y: float) -> Vector3:
 	var epsilon := size / resolution

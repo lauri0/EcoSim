@@ -49,9 +49,10 @@ var last_scale_update:             float = 0.0  # For performance optimization
 func _ready():
 	# Initialize tree
 	time_until_next_repro_check = ideal_seed_gen_interval
-	healthPercentage = 1.0
 	growth_progress = 0.0
 	state = TreeState.GROWING
+	
+	# Health will be calculated based on altitude in first _update_health() call
 	
 	# Find the model node (usually named "Model" in tree scenes)
 	model_node = find_child("Model", true, false)
@@ -64,6 +65,9 @@ func _ready():
 
 func _process(delta):
 	current_age += delta
+	
+	# Update health based on environmental conditions
+	_update_health()
 	
 	# Update growth based on state
 	_update_growth(delta)
@@ -130,35 +134,51 @@ func _update_growth(delta: float):
 	# Safety clamp to ensure state_percentage never exceeds 100%
 	state_percentage = clamp(state_percentage, 0.0, 1.0)
 
-func _calculate_growth_rate() -> float:
-	# Base rate should be 1.0 progress units per second at 100% health and ideal conditions
-	var base_rate = 1.0
-	
-	# Health affects growth rate (0.0 to 1.0)
-	var health_factor = healthPercentage
-	
-	# Altitude affects growth rate (0.1 to 1.0)
-	var altitude_factor = _calculate_altitude_factor()
-	
-	# Final rate: max 1.0 per second with perfect conditions
-	return base_rate * health_factor * altitude_factor
-
-func _calculate_altitude_factor() -> float:
+func _update_health():
+	# Calculate health based on altitude
 	var current_altitude = global_position.y
 	
-	# Perfect at ideal altitude
-	if abs(current_altitude - ideal_altitude) < 1.0:
-		return 1.0
+	# Perfect health at ideal altitude
+	if abs(current_altitude - ideal_altitude) < 0.1:
+		healthPercentage = 1.0
+		return
 	
-	# Reduced growth outside ideal range
+	# Check if outside tolerable range (health would be 0%)
 	if current_altitude < min_viable_altitude or current_altitude > max_viable_altitude:
-		return 0.1  # Very slow growth outside viable range
+		healthPercentage = 0.0
+		return
 	
-	# Linear falloff from ideal to boundaries
-	var distance_to_ideal = abs(current_altitude - ideal_altitude)
-	var max_distance = max(ideal_altitude - min_viable_altitude, max_viable_altitude - ideal_altitude)
+	# Linear interpolation between 25% and 100% health within tolerable range
+	var distance_from_ideal = abs(current_altitude - ideal_altitude)
 	
-	return 1.0 - (distance_to_ideal / max_distance) * 0.7  # 30% to 100% growth rate
+	# Calculate max distance from ideal to either boundary
+	var max_distance_below = ideal_altitude - min_viable_altitude
+	var max_distance_above = max_viable_altitude - ideal_altitude
+	var max_distance = max_distance_above if current_altitude > ideal_altitude else max_distance_below
+	
+	# Avoid division by zero
+	if max_distance <= 0:
+		healthPercentage = 1.0
+		return
+	
+	# Linear scaling: 100% at ideal, 25% at boundaries
+	var health_ratio = 1.0 - (distance_from_ideal / max_distance)
+	healthPercentage = 0.25 + (health_ratio * 0.75)  # Scale from 25% to 100%
+	
+	# Clamp to ensure we stay within bounds
+	healthPercentage = clamp(healthPercentage, 0.0, 1.0)
+
+func _calculate_growth_rate() -> float:
+	# Base rate should be 1.0 progress units per second at 100% health
+	var base_rate = 1.0
+	
+	# Health affects growth rate (calculated automatically based on altitude)
+	var health_factor = healthPercentage
+	
+	# Final rate: max 1.0 per second with perfect health
+	return base_rate * health_factor
+
+# Removed _calculate_altitude_factor() - health is now calculated directly in _update_health()
 
 func _update_scale():
 	# Only update scale periodically for performance
