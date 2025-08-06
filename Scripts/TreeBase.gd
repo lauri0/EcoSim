@@ -21,8 +21,7 @@ enum TreeState {
 ## Time (s) that it takes for the tree to mature given 100% health
 @export var max_growth_progress:   float = 60.0
 @export var max_age:               float = 300.0
-## Idle time in MATURE state at 100% health before the tree starts producing seed
-@export var ideal_maturation_idle_time: float = 30.0
+
 ## Time (s) that it takes for the tree to produce a new seed after losing the previous one given 100% health
 @export var ideal_seed_gen_interval:  float = 30.0
 ## Time that it takes for the seeds to mature after they have spawned on the tree
@@ -33,12 +32,11 @@ enum TreeState {
 @export var adult_size_factor:     float = 10.0
 
 # Seed system properties
-@export var seed_count_per_cycle: int = 5
-@export var seed_spawn_radius: float = 2.0
+@export var seed_spawn_point: Vector3 = Vector3(0, 4.0, 0)  # Base spawn point in local tree coordinates as multiple of scale
 @export var seed_type: String = "spherical"  # Will be overridden per species
 @export var seed_size: float = 0.1
 @export var seed_mass: float = 0.001
-@export var seed_wind_sensitivity: float = 1.0
+@export var seed_germ_chance: float = 0.1
 
 var healthPercentage:              float = 1.0  # Start with full health
 var current_age:                   float = 0.0
@@ -46,15 +44,15 @@ var state:                         TreeState = TreeState.GROWING
 ## Growth progress accumulated, in ideal conditions equal to seconds but can be more
 ## If progress reaches max_growth_progress then the tree is fully grown
 var growth_progress:               float = 0.0
-var mature_idle_progress:          float = 0.0
+
 var seed_production_progress:      float = 0.0
 var seed_maturation_progress:      float = 0.0
 var state_percentage:              float = 0.0
 var time_until_next_repro_check:   float = 0.0
 
-# Seed system variables
-var spawned_seeds: Array[Node3D] = []
-var seeds_ready_to_fly: bool = false
+# Seed system variables - now only one seed at a time
+var spawned_seed: Node3D = null
+var seed_ready_to_fly: bool = false
 
 # Death system variables
 var dying_timer: float = 0.0
@@ -101,6 +99,11 @@ func _ready():
 	collision_body = find_child("StaticBody3D", true, false) as StaticBody3D
 	if not collision_body:
 		print("Warning: No StaticBody3D found in tree ", species_name)
+	else:
+		# Set tree collision layer (layer 3)
+		collision_body.set_collision_layer_value(1, false)
+		collision_body.set_collision_layer_value(3, true)
+		collision_body.set_collision_mask_value(1, false)
 	
 	# Connect to TimeManager for seasonal changes
 	_connect_to_time_manager.call_deferred()
@@ -136,6 +139,10 @@ func _try_reproduce():
 	pass
 
 func _update_growth(delta: float):
+	# Skip growth/seed progress during winter
+	if is_winter:
+		return
+	
 	match state:
 		TreeState.GROWING:
 			# Calculate growth rate based on health and environmental factors
@@ -148,10 +155,10 @@ func _update_growth(delta: float):
 			# Update state percentage for UI
 			state_percentage = growth_progress / max_growth_progress
 			
-			# Check if fully grown
+			# Check if fully grown - go straight to seed production
 			if growth_progress >= max_growth_progress:
-				state = TreeState.MATURE
-				state_percentage = 1.0
+				state = TreeState.SEED_PRODUCTION
+				state_percentage = 0.0
 		
 		TreeState.SEED_PRODUCTION:
 			seed_production_progress += delta * healthPercentage
@@ -169,25 +176,21 @@ func _update_growth(delta: float):
 			state_percentage = seed_maturation_progress / ideal_seed_maturation_interval
 			
 			if seed_maturation_progress >= ideal_seed_maturation_interval:
-				# Release seeds before transitioning to MATURE
-				if seeds_ready_to_fly and not spawned_seeds.is_empty():
-					_release_seeds()
-					seeds_ready_to_fly = false
+				# Release seed before transitioning back to seed production
+				if seed_ready_to_fly and spawned_seed:
+					_release_seed()
+					seed_ready_to_fly = false
 				
-				state = TreeState.MATURE
+				# Go straight back to seed production, skip MATURE state
+				state = TreeState.SEED_PRODUCTION
 				seed_maturation_progress = 0.0
 				state_percentage = 0.0
 		
 		TreeState.MATURE:
-			# Mature trees wait in idle state before starting seed production
-			mature_idle_progress += delta * healthPercentage
-			mature_idle_progress = min(mature_idle_progress, ideal_maturation_idle_time)
-			state_percentage = mature_idle_progress / ideal_maturation_idle_time
-			
-			if mature_idle_progress >= ideal_maturation_idle_time:
-				state = TreeState.SEED_PRODUCTION
-				mature_idle_progress = 0.0
-				state_percentage = 0.0
+			# This state is now only used for initial maturation after growth
+			# Trees should not normally stay in this state
+			state = TreeState.SEED_PRODUCTION
+			state_percentage = 0.0
 		
 		TreeState.DYING:
 			# Tree is dying, handle death timer
@@ -369,45 +372,29 @@ func _handle_seed_lifecycle(_delta: float):
 			
 		TreeState.SEED_MATURATION:
 			# Seeds are maturing on the tree
-			if not seeds_ready_to_fly and spawned_seeds.is_empty():
-				_spawn_seeds_on_tree()
+			if not seed_ready_to_fly and not spawned_seed:
+				_spawn_seed_on_tree()
 			
 		TreeState.MATURE:
 			# Mature trees are in idle state, no seed actions needed
 			pass
 
-func _spawn_seeds_on_tree():
-	# Create seeds attached to the tree
-	for i in range(seed_count_per_cycle):
-		var seed_position = _get_seed_spawn_position()
-		var seed_visual = _create_seed_visual(seed_position)
-		spawned_seeds.append(seed_visual)
+func _spawn_seed_on_tree():
+	# Create single seed at the designated spawn point
+	var current_scale = model_node.scale if model_node else Vector3.ONE
+	var world_spawn_position = global_position + (seed_spawn_point * current_scale)
 	
-	seeds_ready_to_fly = true
-	print("Tree ", species_name, " spawned ", seed_count_per_cycle, " seeds")
-
-func _get_seed_spawn_position() -> Vector3:
-	# Spawn seeds around the tree canopy
-	var angle = randf() * TAU
-	var radius = randf_range(1.0, seed_spawn_radius)
-	var height = randf_range(2.0, 4.0)  # Spawn in canopy area
-	
-	return global_position + Vector3(
-		cos(angle) * radius,
-		height,
-		sin(angle) * radius
-	)
+	spawned_seed = _create_seed_visual(world_spawn_position)
+	seed_ready_to_fly = true
+	print("Tree ", species_name, " spawned 1 seed at designated spawn point")
 
 func _create_seed_visual(spawn_position: Vector3) -> Node3D:
-	# Create a simple visual representation of seeds on tree
+	# Create a visual representation of seeds on tree with proper shape
 	var seed_visual = Node3D.new()
 	var mesh_instance_seed = MeshInstance3D.new()
 	
-	# Create small sphere to represent seed
-	var sphere = SphereMesh.new()
-	sphere.radius = seed_size * 0.5
-	sphere.height = seed_size
-	mesh_instance_seed.mesh = sphere
+	# Use the shared seed mesh creation function from Seed class
+	mesh_instance_seed.mesh = Seed.create_seed_mesh(seed_type, seed_size)
 	
 	# Set material based on species
 	var material = StandardMaterial3D.new()
@@ -423,21 +410,23 @@ func _create_seed_visual(spawn_position: Vector3) -> Node3D:
 func _get_species_seed_color() -> Color:
 	match species_name.to_lower():
 		"pine", "spruce":
-			return Color(0.4, 0.2, 0.1)
+			return Color(0.4, 0.2, 0.1)  # Brown
 		"maple", "birch":
-			return Color(0.8, 0.7, 0.4)
+			return Color(0.8, 0.7, 0.4)  # Light brown
 		"oak":
-			return Color(0.3, 0.2, 0.1)
+			return Color(0.3, 0.2, 0.1)  # Dark brown
+		"rowan":
+			return Color(0.7, 0.0, 0.0)  # Red
 		"willow":
-			return Color(0.9, 0.9, 0.8)
+			return Color(0.9, 0.9, 0.8)  # White/cream
 		_:
-			return Color(0.6, 0.4, 0.2)
+			return Color(0.6, 0.4, 0.2)  # Default brown
 
-func _release_seeds():
-	# Convert visual seeds to physics-based seeds
+func _release_seed():
+	# Convert visual seed to physics-based seed
 	var seed_scene = preload("res://Scripts/Seed.gd")
 	
-	for seed_visual in spawned_seeds:
+	if spawned_seed:
 		# Create physics seed
 		var physics_seed = RigidBody3D.new()
 		physics_seed.set_script(seed_scene)
@@ -447,26 +436,26 @@ func _release_seeds():
 		physics_seed.seed_type = seed_type
 		physics_seed.base_size = seed_size
 		physics_seed.mass_kg = seed_mass
-		physics_seed.wind_sensitivity = seed_wind_sensitivity
+		physics_seed.germination_chance = seed_germ_chance
 		physics_seed.parent_tree = self
 		
 		# Position the seed
 		get_parent().add_child(physics_seed)
-		physics_seed.global_position = seed_visual.global_position
+		physics_seed.global_position = spawned_seed.global_position
 		
 		# Add some initial velocity
 		var initial_velocity = Vector3(
-			randf_range(-1, 1),
-			randf_range(0.5, 2),
-			randf_range(-1, 1)
+			randf_range(1, 2),
+			randf_range(2, 3),
+			randf_range(1, 2)
 		).normalized() * randf_range(1, 3)
 		physics_seed.linear_velocity = initial_velocity
 		
 		# Remove visual seed
-		seed_visual.queue_free()
+		spawned_seed.queue_free()
+		spawned_seed = null
 	
-	spawned_seeds.clear()
-	print("Tree ", species_name, " released seeds into the wind!")
+	print("Tree ", species_name, " released seed into the wind!")
 
 # Death system functions
 func _start_dying():
@@ -475,15 +464,14 @@ func _start_dying():
 	dying_timer = 0.0
 	has_fallen = false
 	
-	# Destroy any attached seeds immediately
-	_destroy_attached_seeds()
+	# Destroy any attached seed immediately
+	_destroy_attached_seed()
 
-func _destroy_attached_seeds():
-	print("Destroying ", spawned_seeds.size(), " attached seeds")
-	for seed_visual in spawned_seeds:
-		if is_instance_valid(seed_visual):
-			seed_visual.queue_free()
-	spawned_seeds.clear()
+func _destroy_attached_seed():
+	if spawned_seed and is_instance_valid(spawned_seed):
+		print("Destroying attached seed")
+		spawned_seed.queue_free()
+		spawned_seed = null
 
 func _start_falling():
 	if has_fallen:

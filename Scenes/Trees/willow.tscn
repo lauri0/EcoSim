@@ -4,13 +4,13 @@
 [ext_resource type="Material" uid="uid://brqa8a4im5r30" path="res://Resources/Materials/Spruce Leaves.tres" id="2_1gr1a"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_1gr1a"]
+height = 5.8
 
-[node name="Tree" instance=ExtResource("1_v6ed1")]
+[node name="TreeBase" instance=ExtResource("1_v6ed1")]
 species_name = "Willow"
-seed_count_per_cycle = 20
-seed_size = 0.03
-seed_mass = 0.0002
-seed_wind_sensitivity = 2.5
+seed_spawn_point = Vector3(0, 3.5, 0)
+seed_size = 0.08
+seed_mass = 0.005
 metadata/_edit_lock_ = true
 metadata/_edit_group_ = true
 
@@ -21,5 +21,5 @@ surface_material_override/1 = ExtResource("2_1gr1a")
 [node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
-transform = Transform3D(2.9, 0, 0, 0, 2.9, 0, 0, 0, 2.9, 0, 2.9, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.9, 0)
 shape = SubResource("CylinderShape3D_1gr1a")

@@ -5,6 +5,10 @@
 
 [node name="TreeBase" type="Node3D"]
 script = ExtResource("1_2cvnp")
+seed_spawn_point = Vector3(0, 5, 0)
+seed_size = 0.3
+seed_mass = 0.01
+seed_germ_chance = 0.25
 
 [node name="Model" type="Node3D" parent="."]
 

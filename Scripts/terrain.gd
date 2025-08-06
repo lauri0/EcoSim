@@ -81,6 +81,11 @@ func _setup_collision():
 	# Create StaticBody3D for collision
 	static_body = StaticBody3D.new()
 	static_body.name = "TerrainCollision"
+	
+	# Set terrain collision layer (layer 2)
+	static_body.set_collision_layer_value(2, true)
+	static_body.set_collision_mask_value(1, false)
+	
 	add_child(static_body)
 	
 	# Create CollisionShape3D

@@ -8,7 +8,6 @@ class_name Seed
 @export var mass_kg: float = 0.001
 @export var drag_coefficient: float = 0.47  # Sphere drag coefficient
 @export var terminal_velocity: float = 2.0
-@export var wind_sensitivity: float = 1.0  # How much wind affects this seed
 @export var lifespan: float = 30.0  # How long seed stays active
 @export var germination_chance: float = 0.1  # Chance to germinate when landing
 
@@ -30,6 +29,11 @@ func _ready():
 	contact_monitor = true
 	max_contacts_reported = 10
 	
+	# Set seed collision layer (layer 4) and mask (collides with terrain layer 2 only)
+	set_collision_layer_value(4, true)
+	set_collision_mask_value(1, false)
+	set_collision_mask_value(2, true)
+	
 	# Ensure physics stability
 	continuous_cd = true
 	can_sleep = false
@@ -49,6 +53,42 @@ func _ready():
 	
 	print("Seed created: ", species_name, " type: ", seed_type)
 
+# Static function to create seed mesh - can be used by both visual and physics seeds
+static func create_seed_mesh(type: String, size: float) -> Mesh:
+	match type:
+		"spherical":
+			var sphere = SphereMesh.new()
+			sphere.radius = size
+			sphere.height = size * 2
+			return sphere
+		
+		"ovoid":
+			var capsule = CapsuleMesh.new()
+			capsule.radius = size
+			capsule.height = size * 2.5
+			return capsule
+		
+		"winged":
+			# Create a simple winged seed (like maple)
+			var box = BoxMesh.new()
+			box.size = Vector3(size * 3, size * 0.3, size * 0.5)
+			return box
+		
+		"cone":
+			# Create cone-like seed (like spruce)
+			var cylinder = CylinderMesh.new()
+			cylinder.top_radius = size * 0.3
+			cylinder.bottom_radius = size
+			cylinder.height = size * 1.5
+			return cylinder
+		
+		_:
+			# Default to spherical if unknown type
+			var sphere = SphereMesh.new()
+			sphere.radius = size
+			sphere.height = size * 2
+			return sphere
+
 func _create_seed_mesh():
 	mesh_instance = MeshInstance3D.new()
 	add_child(mesh_instance)
@@ -56,33 +96,12 @@ func _create_seed_mesh():
 	var material = StandardMaterial3D.new()
 	material.albedo_color = _get_seed_color()
 	
-	match seed_type:
-		"spherical":
-			var sphere = SphereMesh.new()
-			sphere.radius = base_size
-			sphere.height = base_size * 2
-			mesh_instance.mesh = sphere
-		
-		"ovoid":
-			var capsule = CapsuleMesh.new()
-			capsule.radius = base_size
-			capsule.height = base_size * 2.5
-			mesh_instance.mesh = capsule
-		
-		"winged":
-			# Create a simple winged seed (like maple)
-			var box = BoxMesh.new()
-			box.size = Vector3(base_size * 3, base_size * 0.3, base_size * 0.5)
-			mesh_instance.mesh = box
-			drag_coefficient = 1.2  # Higher drag for winged seeds
-		
-		"cone":
-			# Create cone-like seed (like spruce)
-			var cylinder = CylinderMesh.new()
-			cylinder.top_radius = base_size * 0.3
-			cylinder.bottom_radius = base_size
-			cylinder.height = base_size * 1.5
-			mesh_instance.mesh = cylinder
+	# Use the shared static function
+	mesh_instance.mesh = Seed.create_seed_mesh(seed_type, base_size)
+	
+	# Set drag coefficient for winged seeds
+	if seed_type == "winged":
+		drag_coefficient = 1.2  # Higher drag for winged seeds
 	
 	mesh_instance.material_override = material
 
@@ -121,6 +140,8 @@ func _get_seed_color() -> Color:
 			return Color(0.8, 0.7, 0.4)  # Light brown
 		"oak":
 			return Color(0.3, 0.2, 0.1)  # Dark brown
+		"rowan":
+			return Color(0.7, 0.0, 0.0)  # Red
 		"willow":
 			return Color(0.9, 0.9, 0.8)  # White/cream
 		_:
@@ -160,7 +181,6 @@ func _apply_wind_force(_delta: float):
 		wind_force = Vector3.ZERO
 	
 	# Scale wind force by seed properties (limit maximum force)
-	wind_force *= wind_sensitivity
 	wind_force = wind_force.limit_length(50.0)  # Prevent extreme forces
 	
 	# Apply drag based on seed type and current velocity
@@ -192,7 +212,9 @@ func _check_landing():
 	var query = PhysicsRayQueryParameters3D.create(
 		global_position,
 		global_position + Vector3(0, -ray_length, 0),
-		0xFFFFFFFF  # Check all collision layers
+		# Check only the terrain's collision layer
+		#4294967295 - 4
+		2
 	)
 	
 	var result = space_state.intersect_ray(query)
@@ -241,7 +263,7 @@ func _on_body_entered(body):
 	# Handle collision with terrain or other objects
 	if not has_landed:
 		# Check if we hit terrain or a static body
-		if body.is_class("StaticBody3D") or body.is_class("CharacterBody3D") or body.name.contains("Terrain"):
+		if body.name.contains("Terrain"):
 			# Reduce velocity on collision to simulate bouncing/rolling
 			linear_velocity *= 0.4
 			angular_velocity *= 0.6

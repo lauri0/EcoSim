@@ -5,14 +5,14 @@
 [ext_resource type="Material" uid="uid://b3o2a051ti036" path="res://Resources/Materials/Chesnut Leaves.tres" id="3_7hu55"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_7hu55"]
+height = 5.6
 
 [node name="TreeBase" instance=ExtResource("1_ude77")]
 species_name = "Maple"
-seed_count_per_cycle = 12
+seed_spawn_point = Vector3(0, 4.2, 0)
 seed_type = "winged"
 seed_size = 0.12
-seed_mass = 0.0005
-seed_wind_sensitivity = 2.0
+seed_mass = 0.005
 
 [node name="MeshInstance3D" parent="Model" index="0"]
 transform = Transform3D(135, 0, 0, 0, -5.90104e-06, 135, 0, -135, -5.90104e-06, 0, 0, 0)
@@ -22,5 +22,5 @@ surface_material_override/1 = ExtResource("3_7hu55")
 [node name="StaticBody3D" type="StaticBody3D" parent="." index="1"]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" index="0"]
-transform = Transform3D(2.7, 0, 0, 0, 2.7, 0, 0, 0, 2.7, 0, 2.7, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8, 0)
 shape = SubResource("CylinderShape3D_7hu55")
