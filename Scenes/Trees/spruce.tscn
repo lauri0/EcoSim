@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://d2foofg8mioj6"]
+[gd_scene load_steps=6 format=3 uid="uid://ci7cs4pfnyqy4"]
 
 [ext_resource type="PackedScene" uid="uid://f1bdslo3oyuj" path="res://Scenes/Trees/TreeBase.tscn" id="1_sylie"]
 [ext_resource type="ArrayMesh" uid="uid://bwh61g30bcgbs" path="res://Resources/Meshes/Trees/spruce.tres" id="2_4b1qr"]
@@ -9,7 +9,7 @@
 height = 6.5
 radius = 0.4
 
-[node name="TreeBase" instance=ExtResource("1_sylie")]
+[node name="TreeBase2" instance=ExtResource("1_sylie")]
 species_name = "Spruce"
 seed_type = "cone"
 

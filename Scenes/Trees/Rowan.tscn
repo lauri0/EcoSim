@@ -7,7 +7,7 @@
 height = 4.4
 radius = 0.3
 
-[node name="TreeBase" instance=ExtResource("1_u6owb")]
+[node name="TreeBase2" instance=ExtResource("1_u6owb")]
 species_name = "Rowan"
 seed_spawn_point = Vector3(0, 4.5, 0)
 seed_size = 0.15

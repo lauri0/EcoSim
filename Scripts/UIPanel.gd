@@ -24,6 +24,13 @@ var tree_info_label: RichTextLabel
 var currently_inspected_tree: TreeBase
 var popup_update_timer: Timer
 
+# Tree species selection popup
+var species_selection_popup: PopupPanel
+var species_selection_vbox: VBoxContainer
+var species_info_label: RichTextLabel
+var species_spawn_button: Button
+var currently_selected_species: String = ""
+
 # A hard‐coded list, or you could load these from your scenes folder
 var species_list = ["Alder","Aspen","Birch","Linden","Maple","Oak","Pine","Rowan","Spruce","Willow"]
 
@@ -62,7 +69,10 @@ func _ready():
 	# 6) Create tree inspection popup (deferred to avoid busy parent)
 	_create_tree_info_popup.call_deferred()
 	
-	# 7) Connect speed control buttons
+	# 7) Create species selection popup (deferred to avoid busy parent)
+	_create_species_selection_popup.call_deferred()
+	
+	# 8) Connect speed control buttons
 	_connect_speed_buttons()
 
 func _find_world_references():
@@ -88,7 +98,7 @@ func _on_trees_button_pressed() -> void:
 	# 2) Force it to recalc its size
 	#    (you only need this if you read rect_size immediately after adding items)
 	trees_popup.hide()
-	trees_popup.show()  
+	trees_popup.show()
 
 	# 3) Grab the button’s global position + size
 	var btn_rect = trees_button.get_global_rect()
@@ -105,10 +115,11 @@ func _on_trees_button_pressed() -> void:
 
 func _on_trees_popup_item(id: int):
 	var chosen = species_list[id]
-	selected_tree_species = chosen
-	is_tree_spawn_mode = true
-	_update_selected_display()
-	print("Selected tree species: ", chosen, " - Click on terrain to spawn, right click to cancel")
+	# Show the species info popup for the selected species
+	# Don't close the original popup - let it stay open
+	_show_species_info_popup(chosen)
+
+
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -136,6 +147,12 @@ func _input(event: InputEvent) -> void:
 			if tree_info_popup and tree_info_popup.visible:
 				tree_info_popup.hide()
 				_on_popup_hide()  # Manually call to stop timer
+		
+		# Hide both popups if visible
+		if trees_popup and trees_popup.visible:
+			trees_popup.hide()
+		if species_selection_popup and species_selection_popup.visible:
+			species_selection_popup.hide()
 
 func _spawn_tree_at_mouse_position(mouse_pos: Vector2) -> void:
 	if not camera or not terrain:
@@ -233,7 +250,11 @@ func _spawn_tree(species: String, spawn_position: Vector3) -> void:
 		# Now set the position (after it's in the scene tree)
 		tree_instance.global_position = spawn_position
 		
-		print("Spawned ", species, " tree at position: ", spawn_position)
+		# Apply random rotation along the trunk axis (Y-axis)
+		var random_y_rotation = randf() * TAU  # Random rotation between 0 and 2π
+		tree_instance.rotation.y = random_y_rotation
+		
+		print("Spawned ", species, " tree at position: ", spawn_position, " with rotation: ", rad_to_deg(random_y_rotation), "°")
 	else:
 		print("Failed to load tree scene: ", tree_scene_path)
 
@@ -282,6 +303,165 @@ func _create_tree_info_popup():
 	else:
 		# Fallback: add to current scene
 		get_tree().current_scene.add_child(tree_info_popup)
+
+func _create_species_selection_popup():
+	# Create popup panel for species info
+	species_selection_popup = PopupPanel.new()
+	species_selection_popup.size = Vector2(400, 350)
+	species_selection_popup.set_flag(Window.FLAG_RESIZE_DISABLED, true)
+	
+	# Create main container
+	species_selection_vbox = VBoxContainer.new()
+	species_selection_vbox.size = Vector2(380, 330)
+	species_selection_vbox.position = Vector2(10, 10)
+	species_selection_popup.add_child(species_selection_vbox)
+	
+	# Create title label
+	var title_label = Label.new()
+	title_label.text = "Tree Species Information"
+	title_label.add_theme_font_size_override("font_size", 18)
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	species_selection_vbox.add_child(title_label)
+	
+	# Create info label
+	var info_label = RichTextLabel.new()
+	info_label.bbcode_enabled = true
+	info_label.fit_content = true
+	info_label.custom_minimum_size = Vector2(360, 250)
+	species_selection_vbox.add_child(info_label)
+	
+	# Store reference to info label
+	species_info_label = info_label
+	
+	# Create spawn button
+	var spawn_button = Button.new()
+	spawn_button.text = "Spawn This Species"
+	spawn_button.custom_minimum_size = Vector2(200, 40)
+	spawn_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	species_selection_vbox.add_child(spawn_button)
+	
+	# Store reference to spawn button
+	species_spawn_button = spawn_button
+	
+	# Add popup to the scene tree
+	var ui_root = get_parent()
+	if ui_root:
+		ui_root.add_child(species_selection_popup)
+	else:
+		get_tree().current_scene.add_child(species_selection_popup)
+
+func _format_species_info_detailed(species_name: String) -> String:
+	# Create a template tree to get species properties
+	var tree_scene_path = "res://Scenes/Trees/" + species_name + ".tscn"
+	var tree_scene = load(tree_scene_path)
+	
+	if not tree_scene:
+		return "[b]%s[/b]\n\n[color=red]Error: Could not load tree data[/color]" % species_name
+	
+	var tree_instance = tree_scene.instantiate()
+	if not tree_instance or not tree_instance is TreeBase:
+		tree_instance.queue_free()
+		return "[b]%s[/b]\n\n[color=red]Error: Invalid tree data[/color]" % species_name
+	
+	var tree = tree_instance as TreeBase
+	
+	# Get detailed species information
+	var info = "[b]%s[/b]\n\n" % species_name
+	
+	# Altitude preferences
+	info += "[b]Altitude Preferences:[/b]\n"
+	info += "• Ideal: %.1f m\n" % tree.ideal_altitude
+	info += "• Range: %.1f - %.1f m\n\n" % [tree.min_viable_altitude, tree.max_viable_altitude]
+	
+	# Growth information
+	info += "[b]Growth:[/b]\n"
+	info += "• Maturity Time: %.1f years\n" % (tree.max_growth_progress / 60.0)  # Convert seconds to years
+	info += "• Max Age: %.1f years\n" % (tree.max_age / 60.0)
+	info += "• Seed Production: Every %.1f years\n\n" % (tree.ideal_seed_gen_interval / 60.0)
+	
+	# Seed information
+	info += "[b]Seeds:[/b]\n"
+	info += "• Germination Chance: %.1f%%\n\n" % (tree.seed_germ_chance * 100.0)
+	
+	# Clean up the temporary instance
+	tree_instance.queue_free()
+	
+	return info
+
+func _format_species_info_compact(species_name: String) -> String:
+	# Create a template tree to get species properties
+	var tree_scene_path = "res://Scenes/Trees/" + species_name + ".tscn"
+	var tree_scene = load(tree_scene_path)
+	
+	if not tree_scene:
+		return "[b]%s[/b]\n[color=red]Error: Could not load tree data[/color]" % species_name
+	
+	var tree_instance = tree_scene.instantiate()
+	if not tree_instance or not tree_instance is TreeBase:
+		tree_instance.queue_free()
+		return "[b]%s[/b]\n[color=red]Error: Invalid tree data[/color]" % species_name
+	
+	var tree = tree_instance as TreeBase
+	
+	# Get compact species information
+	var info = "[b]%s[/b]\n" % species_name
+	info += "Ideal: %.1fm | Growth: %.1fy | Seeds: %s" % [
+		tree.ideal_altitude,
+		tree.max_growth_progress / 60.0,
+		tree.seed_type
+	]
+	
+	# Clean up the temporary instance
+	tree_instance.queue_free()
+	
+	return info
+
+func _show_species_info_popup(species_name: String):
+	currently_selected_species = species_name
+	
+	if species_selection_popup and species_info_label and species_spawn_button:
+		# Format detailed species information
+		var info_text = _format_species_info_detailed(species_name)
+		species_info_label.text = info_text
+		
+		# Connect spawn button to the selected species
+		# Disconnect any existing connections first
+		if species_spawn_button.pressed.is_connected(_on_spawn_button_pressed):
+			species_spawn_button.pressed.disconnect(_on_spawn_button_pressed)
+		
+		# Connect to the new species
+		species_spawn_button.pressed.connect(_on_spawn_button_pressed.bind(species_name))
+		
+		# Position popup next to the trees popup menu
+		var trees_popup_rect = trees_popup.get_visible_rect()
+		var popup_pos = Vector2(trees_popup_rect.position.x + trees_popup_rect.size.x + 10, trees_popup_rect.position.y)
+		
+		# Keep popup on screen
+		var screen_size = get_viewport().get_visible_rect().size
+		if popup_pos.x + species_selection_popup.size.x > screen_size.x:
+			# If it doesn't fit to the right, put it to the left of the trees popup
+			popup_pos.x = trees_popup_rect.position.x - species_selection_popup.size.x - 10
+		if popup_pos.y + species_selection_popup.size.y > screen_size.y:
+			# If it doesn't fit vertically, adjust the Y position
+			popup_pos.y = screen_size.y - species_selection_popup.size.y - 10
+		
+		species_selection_popup.position = popup_pos
+		species_selection_popup.popup()
+
+func _on_spawn_button_pressed(species_name: String):
+	selected_tree_species = species_name
+	is_tree_spawn_mode = true
+	_update_selected_display()
+	
+	# Hide the species info popup
+	if species_selection_popup and species_selection_popup.visible:
+		species_selection_popup.hide()
+	
+	# Hide the original trees popup menu
+	if trees_popup and trees_popup.visible:
+		trees_popup.hide()
+	
+	print("Selected tree species: ", species_name, " - Click on terrain to spawn, right click to cancel")
 
 func _try_inspect_tree_at_mouse_position(mouse_pos: Vector2):
 	if not camera:
@@ -400,6 +580,8 @@ func _on_popup_hide():
 	if popup_update_timer:
 		popup_update_timer.stop()
 
+
+
 func _on_time_updated(year: int, season: String, hour: int):
 	# Update the date label when time changes (called by TimeManager)
 	if date_label:
@@ -494,6 +676,12 @@ func _is_mouse_over_ui(mouse_position: Vector2) -> bool:
 		##var info_popup_rect = Rect2(tree_info_popup.global_position, tree_info_popup.size)
 		var info_popup_rect = tree_info_popup.get_visible_rect()
 		if info_popup_rect.has_point(mouse_position):
+			return true
+	
+	# Check if species selection popup is visible and mouse is over it
+	if species_selection_popup and species_selection_popup.visible:
+		var species_popup_rect = species_selection_popup.get_visible_rect()
+		if species_popup_rect.has_point(mouse_position):
 			return true
 	
 	return false

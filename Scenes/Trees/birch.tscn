@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://vhml36nwt41x"]
+[gd_scene load_steps=4 format=3 uid="uid://dr1ixmg8dlvid"]
 
 [ext_resource type="PackedScene" uid="uid://f1bdslo3oyuj" path="res://Scenes/Trees/TreeBase.tscn" id="1_bgu1d"]
 [ext_resource type="ArrayMesh" uid="uid://bw40gk8kxowha" path="res://Resources/Meshes/Trees/birch.tres" id="2_o4u0t"]
@@ -7,7 +7,7 @@
 height = 5.5
 radius = 0.4
 
-[node name="TreeBase" instance=ExtResource("1_bgu1d")]
+[node name="TreeBase2" instance=ExtResource("1_bgu1d")]
 species_name = "Birch"
 seed_type = "ovoid"
 seed_size = 0.08

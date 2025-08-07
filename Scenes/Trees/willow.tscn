@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://bnbq0odv5nnnu"]
+[gd_scene load_steps=4 format=3 uid="uid://byu3ih1xroo0f"]
 
 [ext_resource type="PackedScene" uid="uid://f1bdslo3oyuj" path="res://Scenes/Trees/TreeBase.tscn" id="1_v6ed1"]
 [ext_resource type="Material" uid="uid://brqa8a4im5r30" path="res://Resources/Materials/Spruce Leaves.tres" id="2_1gr1a"]
@@ -6,7 +6,7 @@
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_1gr1a"]
 height = 5.8
 
-[node name="TreeBase" instance=ExtResource("1_v6ed1")]
+[node name="TreeBase2" instance=ExtResource("1_v6ed1")]
 species_name = "Willow"
 seed_spawn_point = Vector3(0, 3.5, 0)
 seed_size = 0.08

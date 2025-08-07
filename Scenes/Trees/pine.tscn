@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://c8vtbi0jabu1a"]
+[gd_scene load_steps=6 format=3 uid="uid://87asb0wych66"]
 
 [ext_resource type="PackedScene" uid="uid://f1bdslo3oyuj" path="res://Scenes/Trees/TreeBase.tscn" id="1_b4vra"]
 [ext_resource type="ArrayMesh" uid="uid://d2kmg3p4txi7r" path="res://Resources/Meshes/Trees/pine.tres" id="2_h0tnl"]
@@ -9,7 +9,7 @@
 height = 6.6
 radius = 0.4
 
-[node name="TreeBase" instance=ExtResource("1_b4vra")]
+[node name="TreeBase2" instance=ExtResource("1_b4vra")]
 species_name = "Pine"
 ideal_altitude = 12.0
 min_viable_altitude = 8.0

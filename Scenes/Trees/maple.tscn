@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://bml4p6kfomuui"]
+[gd_scene load_steps=5 format=3 uid="uid://c2r4p8y1l5a6y"]
 
 [ext_resource type="PackedScene" uid="uid://f1bdslo3oyuj" path="res://Scenes/Trees/TreeBase.tscn" id="1_ude77"]
 [ext_resource type="ArrayMesh" uid="uid://colubwdemk04b" path="res://Resources/Meshes/Trees/maple.tres" id="2_7hu55"]
@@ -7,7 +7,7 @@
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_7hu55"]
 height = 5.6
 
-[node name="TreeBase" instance=ExtResource("1_ude77")]
+[node name="TreeBase2" instance=ExtResource("1_ude77")]
 species_name = "Maple"
 seed_spawn_point = Vector3(0, 4.2, 0)
 seed_type = "winged"

@@ -66,10 +66,14 @@ var model_node:                    Node3D  # Reference to the visual model
 var mesh_instance:                 MeshInstance3D  # Reference to the mesh for material changes
 var last_scale_update:             float = 0.0  # For performance optimization
 
-# Winter materials
+# Seasonal materials
 var original_leaf_material:        Material
 var winter_leaf_material:          StandardMaterial3D
+var autumn_leaf_material:          StandardMaterial3D
 var is_winter:                     bool = false
+var is_autumn:                     bool = false
+var autumn_progress:               float = 0.0  # 0.0 to 1.0 for gradual color transition
+var winter_progress:               float = 0.0  # 0.0 to 1.0 for gradual winter transition
 
 func _ready():
 	# Initialize tree
@@ -89,7 +93,7 @@ func _ready():
 		# Find the mesh instance for material changes
 		mesh_instance = model_node.find_child("MeshInstance3D", true, false) as MeshInstance3D
 		if mesh_instance:
-			_setup_winter_materials()
+			_setup_seasonal_materials()
 		else:
 			print("Warning: No MeshInstance3D found in tree ", species_name)
 	else:
@@ -125,6 +129,12 @@ func _process(delta):
 	# Update visual scale (performance optimized)
 	_update_scale()
 	
+	# Update seasonal color progressions
+	if is_autumn and autumn_leaf_material:
+		_update_autumn_color_transition()
+	elif is_winter and winter_leaf_material:
+		_update_winter_color_transition()
+	
 	# Handle seed lifecycle
 	_handle_seed_lifecycle(delta)
 	
@@ -139,7 +149,25 @@ func _try_reproduce():
 	pass
 
 func _update_growth(delta: float):
-	# Skip growth/seed progress during winter
+	# Handle dying state regardless of season (death should continue during winter)
+	if state == TreeState.DYING:
+		# Tree is dying, handle death timer
+		dying_timer += delta
+		state_percentage = dying_timer / death_duration
+		
+		# Handle falling animation
+		if not has_fallen and dying_timer > 1.0:  # Start falling after 1 second
+			_start_falling()
+		
+		# Remove tree after death duration
+		if dying_timer >= death_duration:
+			_remove_tree()
+		
+		# Safety clamp to ensure state_percentage never exceeds 100%
+		state_percentage = clamp(state_percentage, 0.0, 1.0)
+		return
+	
+	# Skip growth/seed progress during winter (but not death)
 	if is_winter:
 		return
 	
@@ -191,19 +219,6 @@ func _update_growth(delta: float):
 			# Trees should not normally stay in this state
 			state = TreeState.SEED_PRODUCTION
 			state_percentage = 0.0
-		
-		TreeState.DYING:
-			# Tree is dying, handle death timer
-			dying_timer += delta
-			state_percentage = dying_timer / death_duration
-			
-			# Handle falling animation
-			if not has_fallen and dying_timer > 1.0:  # Start falling after 1 second
-				_start_falling()
-			
-			# Remove tree after death duration
-			if dying_timer >= death_duration:
-				_remove_tree()
 	
 	# Safety clamp to ensure state_percentage never exceeds 100%
 	state_percentage = clamp(state_percentage, 0.0, 1.0)
@@ -287,7 +302,7 @@ func get_state_name() -> String:
 		_:
 			return "UNKNOWN"
 
-func _setup_winter_materials():
+func _setup_seasonal_materials():
 	# Determine leaf material index based on tree species
 	var leaf_material_index = _get_leaf_material_index()
 	
@@ -300,15 +315,27 @@ func _setup_winter_materials():
 		if not original_leaf_material and mesh_instance.mesh:
 			original_leaf_material = mesh_instance.mesh.surface_get_material(leaf_material_index)
 		
-		# Create winter version of leaf material
+		# Create seasonal versions of leaf material
 		if original_leaf_material:
+			# Create winter material
 			winter_leaf_material = StandardMaterial3D.new()
 			winter_leaf_material.resource_name = "Winter " + original_leaf_material.resource_name
 			winter_leaf_material.vertex_color_use_as_albedo = true
 			winter_leaf_material.albedo_color = Color(0.9, 0.9, 0.95, 1.0)  # Snowy white
 			winter_leaf_material.emission_enabled = true
 			winter_leaf_material.emission = Color(0.1, 0.1, 0.15)  # Slight blue tint
-			print("Created winter material for ", species_name, " (leaf material index: ", leaf_material_index, ")")
+			
+			# Create autumn material based on species
+			autumn_leaf_material = StandardMaterial3D.new()
+			autumn_leaf_material.resource_name = "Autumn " + original_leaf_material.resource_name
+			var autumn_color = _get_autumn_color_for_species()
+			if autumn_color != Color.TRANSPARENT:  # Only create autumn material if species changes color
+				autumn_leaf_material.vertex_color_use_as_albedo = true
+				autumn_leaf_material.albedo_color = autumn_color
+				print("Created seasonal materials for ", species_name, " (leaf material index: ", leaf_material_index, ", autumn color: ", autumn_color, ")")
+			else:
+				autumn_leaf_material = null  # Conifers don't get autumn colors
+				print("Created winter material for ", species_name, " (no autumn color change)")
 		else:
 			print("Warning: No leaf material found for ", species_name, " at index ", leaf_material_index)
 	else:
@@ -321,6 +348,18 @@ func _get_leaf_material_index() -> int:
 	else:
 		# Standard case: bark at index 0, leaves at index 1
 		return 1
+
+func _get_autumn_color_for_species() -> Color:
+	# Return autumn colors based on species
+	match species_name.to_lower():
+		"aspen":
+			return Color(1.0, 0.6, 0.2, 1.0)  # Orange
+		"maple":
+			return Color(0.8, 0.2, 0.1, 1.0)  # Red
+		"pine", "spruce":
+			return Color.TRANSPARENT  # Conifers don't change color
+		_:
+			return Color(1.0, 0.9, 0.3, 1.0)  # Yellow for most other deciduous trees
 
 func _connect_to_time_manager():
 	# Find TimeManager and connect to season changes
@@ -341,12 +380,14 @@ func _connect_to_time_manager():
 	else:
 		print("Warning: Could not connect to TimeManager season signal for ", species_name)
 
-func _on_season_changed(_season: String, winter_factor: float):
+func _on_season_changed(season: String, winter_factor: float):
 	# Switch materials based on season
 	var should_be_winter = (winter_factor > 0.5)
+	var should_be_autumn = (season.to_lower() == "autumn")
 	
-	if should_be_winter != is_winter:
+	if should_be_winter != is_winter or should_be_autumn != is_autumn:
 		is_winter = should_be_winter
+		is_autumn = should_be_autumn
 		_update_seasonal_appearance()
 
 func _update_seasonal_appearance():
@@ -356,13 +397,106 @@ func _update_seasonal_appearance():
 	var leaf_material_index = _get_leaf_material_index()
 	
 	if is_winter:
-		# Switch to winter (snowy) leaves
-		mesh_instance.set_surface_override_material(leaf_material_index, winter_leaf_material)
-		print("Tree ", species_name, " switched to winter appearance (leaf index: ", leaf_material_index, ")")
+		# Use gradual winter transition
+		_update_winter_color_transition()
+		print("Tree ", species_name, " updating winter appearance with gradual transition (leaf index: ", leaf_material_index, ")")
+	elif is_autumn and autumn_leaf_material:
+		# For autumn, we need to gradually interpolate between normal and autumn colors
+		_update_autumn_color_transition()
 	else:
 		# Switch back to original leaves
 		mesh_instance.set_surface_override_material(leaf_material_index, original_leaf_material)
 		print("Tree ", species_name, " switched to normal appearance (leaf index: ", leaf_material_index, ")")
+
+func _create_interpolated_material(from_color: Color, to_color: Color, progress: float, material_name: String) -> StandardMaterial3D:
+	# Create an interpolated material for gradual color transition
+	var interpolated_material = StandardMaterial3D.new()
+	interpolated_material.resource_name = material_name + " " + original_leaf_material.resource_name
+	interpolated_material.vertex_color_use_as_albedo = true
+	
+	# Interpolate between colors
+	var current_color = from_color.lerp(to_color, progress)
+	interpolated_material.albedo_color = current_color
+	
+	# For winter materials, also add the emission effect
+	if material_name.begins_with("Winter"):
+		interpolated_material.emission_enabled = true
+		interpolated_material.emission = Color(0.1, 0.1, 0.15) * progress  # Scale emission with progress
+	
+	return interpolated_material
+
+func _get_original_leaf_color() -> Color:
+	# Get original material color (default to green if we can't get it)
+	var original_color = Color(0.3, 0.8, 0.2, 1.0)  # Default green
+	if original_leaf_material is StandardMaterial3D:
+		var original_std_mat = original_leaf_material as StandardMaterial3D
+		original_color = original_std_mat.albedo_color
+	return original_color
+
+func _update_autumn_color_transition():
+	if not autumn_leaf_material or not original_leaf_material:
+		return
+	
+	# Get the current time from TimeManager to calculate autumn progress
+	var root = get_tree().current_scene
+	var time_manager = root.find_child("TimeManager", true, false)
+	
+	if time_manager and time_manager.has_method("get_current_hour"):
+		var current_hour = time_manager.get_current_hour()
+		# Calculate autumn progress: 0.0 at midnight (00:00), 1.0 at noon (12:00)
+		autumn_progress = clamp(current_hour / 12.0, 0.0, 1.0)
+		
+		var original_color = _get_original_leaf_color()
+		var autumn_color = autumn_leaf_material.albedo_color
+		
+		# Create and apply the interpolated material
+		var interpolated_material = _create_interpolated_material(original_color, autumn_color, autumn_progress, "Autumn Transition")
+		var leaf_material_index = _get_leaf_material_index()
+		mesh_instance.set_surface_override_material(leaf_material_index, interpolated_material)
+
+func _update_winter_color_transition():
+	if not winter_leaf_material or not original_leaf_material:
+		return
+	
+	# Get the current time from TimeManager to calculate winter progress
+	var root = get_tree().current_scene
+	var time_manager = root.find_child("TimeManager", true, false)
+	
+	if time_manager and time_manager.has_method("get_current_hour"):
+		var current_hour = time_manager.get_current_hour()
+		
+		# Calculate winter progress based on time of day
+		var transition_progress: float
+		var from_color: Color
+		var to_color: Color
+		
+		if current_hour <= 2.0:
+			# Beginning of winter: transition from autumn to winter (00:00 - 02:00)
+			transition_progress = clamp(current_hour / 2.0, 0.0, 1.0)
+			# Get autumn color for this species (or default green if no autumn color)
+			var autumn_color = Color.TRANSPARENT
+			if autumn_leaf_material:
+				autumn_color = autumn_leaf_material.albedo_color
+			else:
+				autumn_color = _get_original_leaf_color()  # Fall back to green for conifers
+			
+			from_color = autumn_color
+			to_color = winter_leaf_material.albedo_color
+		elif current_hour >= 22.0:
+			# End of winter: transition from winter to default (22:00 - 00:00)
+			transition_progress = clamp((24.0 - current_hour) / 2.0, 0.0, 1.0)
+			from_color = _get_original_leaf_color()
+			to_color = winter_leaf_material.albedo_color
+		else:
+			# Full winter during the middle hours - just use winter material directly
+			var leaf_material_index = _get_leaf_material_index()
+			mesh_instance.set_surface_override_material(leaf_material_index, winter_leaf_material)
+			return
+		
+		# Create and apply the interpolated material
+		var interpolated_material = _create_interpolated_material(from_color, to_color, transition_progress, "Winter Transition")
+		var leaf_mat_index = _get_leaf_material_index()
+		mesh_instance.set_surface_override_material(leaf_mat_index, interpolated_material)
 
 func _handle_seed_lifecycle(_delta: float):
 	match state:

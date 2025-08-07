@@ -89,7 +89,7 @@ func _process(delta):
 	# Update lighting based on current time
 	_update_lighting()
 	
-	# Update terrain winter effect
+	# Update terrain winter effect (continuous updates for gradual transitions)
 	_update_terrain_winter_effect()
 	
 	# Emit signal for UI updates (only emit when hour changes to avoid spam)
@@ -134,10 +134,25 @@ func get_current_season() -> String:
 	return season_names[current_day]
 
 func get_current_winter_factor() -> float:
-	return 1.0 if current_day == 3 else 0.0  # Winter is day 3 (index 3)
+	if current_day != 3:  # Not winter
+		return 0.0
+	
+	# During winter, calculate gradual transition based on time of day
+	if current_hour <= 2.0:
+		# Beginning of winter: transition from 0 to 1 (00:00 - 02:00)
+		return clamp(current_hour / 2.0, 0.0, 1.0)
+	elif current_hour >= 22.0:
+		# End of winter: transition from 1 to 0 (22:00 - 00:00)
+		return clamp((24.0 - current_hour) / 2.0, 0.0, 1.0)
+	else:
+		# Full winter during the middle hours
+		return 1.0
 
 func get_current_hour_int() -> int:
 	return int(current_hour)
+
+func get_current_hour() -> float:
+	return current_hour
 
 func get_current_year() -> int:
 	return current_year
@@ -174,7 +189,7 @@ func _update_terrain_winter_effect():
 	
 	var material = terrain_mesh.material_override as ShaderMaterial
 	if material:
-		var winter_factor = 1.0 if current_day == 3 else 0.0  # Winter is day 3
+		var winter_factor = get_current_winter_factor()  # Use the gradual winter factor
 		material.set_shader_parameter("winter_factor", winter_factor)
 
 func _connect_to_ui():

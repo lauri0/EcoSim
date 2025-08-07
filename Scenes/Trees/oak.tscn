@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://cxs1mbj25xt5m"]
+[gd_scene load_steps=6 format=3 uid="uid://ojv2o68n4ils"]
 
 [ext_resource type="PackedScene" uid="uid://f1bdslo3oyuj" path="res://Scenes/Trees/TreeBase.tscn" id="1_248wi"]
 [ext_resource type="ArrayMesh" uid="uid://b621smtmfrye3" path="res://Resources/Meshes/Trees/oak.tres" id="2_thjcw"]
@@ -9,7 +9,7 @@
 height = 6.2
 radius = 0.7
 
-[node name="TreeBase" instance=ExtResource("1_248wi")]
+[node name="TreeBase2" instance=ExtResource("1_248wi")]
 species_name = "Oak"
 seed_spawn_point = Vector3(0, 4.5, 0)
 seed_size = 0.2

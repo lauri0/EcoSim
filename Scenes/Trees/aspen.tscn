@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://dgddqqaskds5f"]
+[gd_scene load_steps=5 format=3 uid="uid://dpbrethhvcllo"]
 
 [ext_resource type="PackedScene" uid="uid://f1bdslo3oyuj" path="res://Scenes/Trees/TreeBase.tscn" id="1_8qm6t"]
 [ext_resource type="ArrayMesh" uid="uid://c4v56wguvvf2q" path="res://Resources/Meshes/Trees/aspen.tres" id="2_lh3mu"]
@@ -8,7 +8,7 @@
 height = 6.2
 radius = 0.4
 
-[node name="TreeBase" instance=ExtResource("1_8qm6t")]
+[node name="TreeBase2" instance=ExtResource("1_8qm6t")]
 species_name = "Aspen"
 min_viable_altitude = 4.0
 max_viable_altitude = 14.0
