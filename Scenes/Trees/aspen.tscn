@@ -9,15 +9,15 @@ height = 6.2
 radius = 0.4
 
 [node name="TreeBase2" instance=ExtResource("1_8qm6t")]
-species_name = "Aspen"
-min_viable_altitude = 4.0
-max_viable_altitude = 14.0
-max_age = 280.0
 ideal_seed_gen_interval = 18.0
 ideal_seed_maturation_interval = 18.0
 seed_spawn_point = Vector3(0, 4.5, 0)
 seed_size = 0.08
 seed_mass = 0.005
+min_viable_altitude = 4.0
+max_viable_altitude = 14.0
+species_name = "Aspen"
+max_age = 280.0
 
 [node name="MeshInstance3D" parent="Model" index="0"]
 transform = Transform3D(150, 0, 0, 0, -6.55671e-06, 150, 0, -150, -6.55671e-06, 0, 0, 0)

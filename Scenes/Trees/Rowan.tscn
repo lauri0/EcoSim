@@ -8,10 +8,10 @@ height = 4.4
 radius = 0.3
 
 [node name="TreeBase2" instance=ExtResource("1_u6owb")]
-species_name = "Rowan"
 seed_spawn_point = Vector3(0, 4.5, 0)
 seed_size = 0.15
 seed_mass = 0.02
+species_name = "Rowan"
 
 [node name="MeshInstance3D" parent="Model" index="0"]
 transform = Transform3D(105, 0, 0, 0, -4.5897e-06, 105, 0, -105, -4.5897e-06, 0, 0, 0)

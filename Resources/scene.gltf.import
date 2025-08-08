@@ -1,0 +1,1006 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://ctmrdyu4whb0l"
+path="res://.godot/imported/scene.gltf-e3236a4ead290c4c4342a51225a342d8.scn"
+
+[deps]
+
+source_file="res://Resources/scene.gltf"
+dest_files=["res://.godot/imported/scene.gltf-e3236a4ead290c4c4342a51225a342d8.scn"]
+
+[params]
+
+nodes/root_type=""
+nodes/root_name=""
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
+nodes/use_node_type_suffixes=true
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+meshes/create_shadow_meshes=true
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=false
+animation/remove_immutable_tracks=true
+animation/import_rest_as_RESET=false
+import_script/path=""
+_subresources={
+"materials": {
+"Mat_tree": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/Mat_tree.tres"
+}
+},
+"meshes": {
+"Sketchfab_Scene_Flowers_001_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_001_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_002_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_002_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_003_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_003_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_004_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_004_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_005_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_005_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_006_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_006_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_007_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_007_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_008_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_008_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_009_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_009_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_010_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_010_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_011_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_011_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_012_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_012_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_013_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_013_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_014_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_014_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_015_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_015_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_016_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_016_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_017_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_017_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_018_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_018_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_019_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_019_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_020_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_020_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_021_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_021_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_022_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_022_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_023_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_023_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_024_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_024_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_025_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_025_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_026_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_026_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_027_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_027_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_028_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_028_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_029_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_029_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_030_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_030_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_031_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_031_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_032_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_032_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_033_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_033_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_034_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_034_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_035_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_035_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_036_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_036_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_037_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_037_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Flowers_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Flowers_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Grass_001_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Grass_001_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Grass_002_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Grass_002_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Grass_003_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Grass_003_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Grass_004_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Grass_004_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Grass_005_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Grass_005_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Grass_006_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Grass_006_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Grass_007_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Grass_007_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Grass_008_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Grass_008_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Grass_009_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Grass_009_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Grass_010_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Grass_010_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Grass_011_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Grass_011_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Grass_012_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Grass_012_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Grass_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Grass_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Ground_001_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Ground_001_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Ground_002_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Ground_002_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Ground_003_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Ground_003_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Ground_004_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Ground_004_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Ground_005_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Ground_005_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Ground_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Ground_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Mushrooms_001_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Mushrooms_001_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Mushrooms_002_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Mushrooms_002_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Mushrooms_003_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Mushrooms_003_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Mushrooms_004_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Mushrooms_004_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Mushrooms_005_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Mushrooms_005_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Mushrooms_006_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Mushrooms_006_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Mushrooms_007_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Mushrooms_007_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Mushrooms_008_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Mushrooms_008_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Mushrooms_009_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Mushrooms_009_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Mushrooms_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Mushrooms_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Plane_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Plane_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_001_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_001_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_002_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_002_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_003_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_003_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_004_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_004_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_005_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_005_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_006_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_006_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_007_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_007_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_008_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_008_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_009_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_009_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_010_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_010_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_011_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_011_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_012_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_012_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_013_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_013_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_014_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_014_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_015_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_015_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stone_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stone_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stump_001_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stump_001_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stump_002_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stump_002_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stump_003_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stump_003_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stump_004_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stump_004_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stump_005_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stump_005_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stump_006_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stump_006_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stump_007_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stump_007_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stump_008_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stump_008_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Stump_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Stump_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_001_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_001_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_002_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_002_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_003_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_003_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_004_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_004_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_005_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_005_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_006_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_006_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_007_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_007_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_008_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_008_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_009_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_009_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_010_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_010_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_011_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_011_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_012_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_012_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_013_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_013_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_014_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_014_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_015_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_015_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_016_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_016_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_017_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_017_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_018_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_018_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_019_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_019_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_020_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_020_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_021_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_021_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_022_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_022_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_023_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_023_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_024_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_024_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_025_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_025_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_026_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_026_Mat_tree_0.res"
+},
+"Sketchfab_Scene_Tree_Mat_tree_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack1/Sketchfab_Scene_Tree_Mat_tree_0.res"
+}
+}
+}
+gltf/naming_version=1
+gltf/embedded_image_handling=1

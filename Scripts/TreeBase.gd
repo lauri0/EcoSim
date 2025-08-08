@@ -1,4 +1,4 @@
-extends Node3D
+extends "res://Scripts/Plant.gd"
 class_name TreeBase
 
 # Tree state enum
@@ -10,17 +10,8 @@ enum TreeState {
 	DYING
 }
 
-@export var species_name:          String = "Alder"
-@export var ideal_altitude:        float = 10.0
-@export var min_viable_altitude:   float = 0.0
-@export var max_viable_altitude:   float = 50.0
-## The radius in which this tree blocks other trees from spawning
-@export var blocking_radius:       float = 5.0
-## The radius which this tree needs to be free in order to spawn
-@export var needs_free_radius:     float = 6.0
 ## Time (s) that it takes for the tree to mature given 100% health
 @export var max_growth_progress:   float = 60.0
-@export var max_age:               float = 300.0
 
 ## Time (s) that it takes for the tree to produce a new seed after losing the previous one given 100% health
 @export var ideal_seed_gen_interval:  float = 30.0
@@ -38,8 +29,9 @@ enum TreeState {
 @export var seed_mass: float = 0.001
 @export var seed_germ_chance: float = 0.1
 
-var healthPercentage:              float = 1.0  # Start with full health
-var current_age:                   float = 0.0
+## Inherited from LifeForm:
+## var healthPercentage: float
+## var current_age: float
 var state:                         TreeState = TreeState.GROWING
 ## Growth progress accumulated, in ideal conditions equal to seconds but can be more
 ## If progress reaches max_growth_progress then the tree is fully grown
@@ -223,39 +215,7 @@ func _update_growth(delta: float):
 	# Safety clamp to ensure state_percentage never exceeds 100%
 	state_percentage = clamp(state_percentage, 0.0, 1.0)
 
-func _update_health():
-	# Calculate health based on altitude
-	var current_altitude = global_position.y
-	
-	# Perfect health at ideal altitude
-	if abs(current_altitude - ideal_altitude) < 0.1:
-		healthPercentage = 1.0
-		return
-	
-	# Check if outside tolerable range (health would be 0%)
-	if current_altitude < min_viable_altitude or current_altitude > max_viable_altitude:
-		healthPercentage = 0.0
-		return
-	
-	# Linear interpolation between 25% and 100% health within tolerable range
-	var distance_from_ideal = abs(current_altitude - ideal_altitude)
-	
-	# Calculate max distance from ideal to either boundary
-	var max_distance_below = ideal_altitude - min_viable_altitude
-	var max_distance_above = max_viable_altitude - ideal_altitude
-	var max_distance = max_distance_above if current_altitude > ideal_altitude else max_distance_below
-	
-	# Avoid division by zero
-	if max_distance <= 0:
-		healthPercentage = 1.0
-		return
-	
-	# Linear scaling: 100% at ideal, 25% at boundaries
-	var health_ratio = 1.0 - (distance_from_ideal / max_distance)
-	healthPercentage = 0.25 + (health_ratio * 0.75)  # Scale from 25% to 100%
-	
-	# Clamp to ensure we stay within bounds
-	healthPercentage = clamp(healthPercentage, 0.0, 1.0)
+## _update_health now provided by Plant
 
 func _calculate_growth_rate() -> float:
 	# Base rate should be 1.0 progress units per second at 100% health

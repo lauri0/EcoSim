@@ -7,10 +7,10 @@
 height = 5.8
 
 [node name="TreeBase2" instance=ExtResource("1_v6ed1")]
-species_name = "Willow"
 seed_spawn_point = Vector3(0, 3.5, 0)
 seed_size = 0.08
 seed_mass = 0.005
+species_name = "Willow"
 metadata/_edit_lock_ = true
 metadata/_edit_group_ = true
 

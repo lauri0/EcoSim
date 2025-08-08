@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://bunx3lov7hsqi"]
+
+[resource]
+resource_name = "birchTI_material"
+cull_mode = 2
+albedo_color = Color(0.890194, 0.811765, 0.643138, 1)
+roughness = 0.9

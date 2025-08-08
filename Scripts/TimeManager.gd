@@ -195,12 +195,12 @@ func _update_terrain_winter_effect():
 func _connect_to_ui():
 	# Find UI components and connect to them
 	var root = get_tree().current_scene
-	var ui_panel = root.find_child("UIPanel", true, false)
+	var ui_panel = root.find_child("BottomPanel", true, false)
 	
 	if ui_panel and ui_panel.has_method("_on_time_updated"):
 		# Connect our time_updated signal to the UI panel
 		time_updated.connect(ui_panel._on_time_updated)
-		print("TimeManager connected to UIPanel")
+		print("TimeManager connected to BottomPanel")
 		
 		# Initialize the UI with current time
 		ui_panel._on_time_updated(current_year, season_names[current_day], int(current_hour))
@@ -208,4 +208,4 @@ func _connect_to_ui():
 		# Initialize terrain winter effect
 		_update_terrain_winter_effect()
 	else:
-		print("Warning: Could not find UIPanel or _on_time_updated method!")
+		print("Warning: Could not find BottomPanel or _on_time_updated method!")

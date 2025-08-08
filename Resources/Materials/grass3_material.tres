@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://75nw3d11dky5"]
+
+[resource]
+resource_name = "grass3_material"
+cull_mode = 2
+albedo_color = Color(0.556861, 0.862745, 0.431373, 1)
+roughness = 0.7

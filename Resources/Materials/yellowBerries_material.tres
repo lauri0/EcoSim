@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://dexoya8vx1wnt"]
+
+[resource]
+resource_name = "yellowBerries_material"
+cull_mode = 2
+albedo_color = Color(0.95686, 0.772549, 0.258824, 1)
+roughness = 0.7

@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://nrjpaka3xrjf"]
+
+[resource]
+resource_name = "mushroom2S_material"
+cull_mode = 2
+albedo_color = Color(0.83137, 0.215686, 0.168628, 1)
+roughness = 0.7

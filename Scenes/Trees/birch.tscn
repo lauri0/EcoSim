@@ -8,10 +8,10 @@ height = 5.5
 radius = 0.4
 
 [node name="TreeBase2" instance=ExtResource("1_bgu1d")]
-species_name = "Birch"
 seed_type = "ovoid"
 seed_size = 0.08
 seed_mass = 0.005
+species_name = "Birch"
 
 [node name="MeshInstance3D" parent="Model" index="0"]
 transform = Transform3D(135, 0, 0, 0, -5.90104e-06, 135, 0, -135, -5.90104e-06, 0, 0, 0)

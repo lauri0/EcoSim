@@ -1,0 +1,9 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://bs2kkjvfyo36o"]
+
+[ext_resource type="Texture2D" uid="uid://7lyur1bifes2" path="res://Resources/textures/Mat_tree_baseColor.png" id="1_jekp0"]
+
+[resource]
+resource_name = "Mat_tree"
+cull_mode = 2
+albedo_texture = ExtResource("1_jekp0")
+roughness = 0.804041

@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://cndl0j60pj2cv"]
+
+[resource]
+resource_name = "blueBerries_material"
+cull_mode = 2
+albedo_color = Color(0.294117, 0, 0.509804, 1)
+roughness = 0.7

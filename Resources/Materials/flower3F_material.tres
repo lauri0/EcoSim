@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://dlhjictaqe6kq"]
+
+[resource]
+resource_name = "flower3F_material"
+cull_mode = 2
+albedo_color = Color(0.290194, 0.427451, 0.941176, 1)
+roughness = 0.8

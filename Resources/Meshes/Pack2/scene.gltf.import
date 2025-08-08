@@ -1,0 +1,874 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://bi0xk10i07ah8"
+path="res://.godot/imported/scene.gltf-a36b429d9d147a6f6fed0e6e01a37e18.scn"
+
+[deps]
+
+source_file="res://Resources/Meshes/Pack2/scene.gltf"
+dest_files=["res://.godot/imported/scene.gltf-a36b429d9d147a6f6fed0e6e01a37e18.scn"]
+
+[params]
+
+nodes/root_type=""
+nodes/root_name=""
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
+nodes/use_node_type_suffixes=true
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+meshes/create_shadow_meshes=true
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=false
+animation/remove_immutable_tracks=true
+animation/import_rest_as_RESET=false
+import_script/path=""
+_subresources={
+"materials": {
+"Material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/Material.tres"
+},
+"TerrainB_color": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/TerrainB_color.tres"
+},
+"birchH_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/birchH_material.tres"
+},
+"birchTI_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/birchTI_material.tres"
+},
+"birchT_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/birchT_material.tres"
+},
+"blueBerries_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/blueBerries_material.tres"
+},
+"bush2_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/bush2_material.tres"
+},
+"bush3_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/bush3_material.tres"
+},
+"bushF_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/bushF_material.tres"
+},
+"bush_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/bush_material.tres"
+},
+"flower1F2_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/flower1F2_material.tres"
+},
+"flower1F_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/flower1F_material.tres"
+},
+"flower1G_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/flower1G_material.tres"
+},
+"flower2F2_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/flower2F2_material.tres"
+},
+"flower2F_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/flower2F_material.tres"
+},
+"flower2G_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/flower2G_material.tres"
+},
+"flower3F2_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/flower3F2_material.tres"
+},
+"flower3F_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/flower3F_material.tres"
+},
+"flower3G_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/flower3G_material.tres"
+},
+"grass1_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/grass1_material.tres"
+},
+"grass2_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/grass2_material.tres"
+},
+"grass3_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/grass3_material.tres"
+},
+"leaf_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/leaf_material.tres"
+},
+"material_0": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/material_0.tres"
+},
+"mushroom1L_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/mushroom1L_material.tres"
+},
+"mushroom1S_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/mushroom1S_material.tres"
+},
+"mushroom1T_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/mushroom1T_material.tres"
+},
+"mushroom2L_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/mushroom2L_material.tres"
+},
+"mushroom2S_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/mushroom2S_material.tres"
+},
+"mushroom2T_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/mushroom2T_material.tres"
+},
+"mushroom3L_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/mushroom3L_material.tres"
+},
+"mushroom3S_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/mushroom3S_material.tres"
+},
+"mushroom3T_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/mushroom3T_material.tres"
+},
+"pineH_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/pineH_material.tres"
+},
+"pineTI_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/pineTI_material.tres"
+},
+"pineT_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/pineT_material.tres"
+},
+"redBerries_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/redBerries_material.tres"
+},
+"robleTI_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/robleTI_material.tres"
+},
+"robleT_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/robleT_material.tres"
+},
+"rocks_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/rocks_material.tres"
+},
+"terrainG_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/terrainG_material.tres"
+},
+"woodI_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/woodI_material.tres"
+},
+"wood_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/wood_material.tres"
+},
+"yellowBerries_material": {
+"use_external/enabled": true,
+"use_external/path": "res://Resources/Materials/yellowBerries_material.tres"
+}
+},
+"meshes": {
+"Sketchfab_Scene_Object_0": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_0.res"
+},
+"Sketchfab_Scene_Object_1": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_1.res"
+},
+"Sketchfab_Scene_Object_10": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_10.res"
+},
+"Sketchfab_Scene_Object_11": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_11.res"
+},
+"Sketchfab_Scene_Object_12": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_12.res"
+},
+"Sketchfab_Scene_Object_13": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_13.res"
+},
+"Sketchfab_Scene_Object_14": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_14.res"
+},
+"Sketchfab_Scene_Object_15": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_15.res"
+},
+"Sketchfab_Scene_Object_16": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_16.res"
+},
+"Sketchfab_Scene_Object_17": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_17.res"
+},
+"Sketchfab_Scene_Object_18": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_18.res"
+},
+"Sketchfab_Scene_Object_19": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_19.res"
+},
+"Sketchfab_Scene_Object_2": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_2.res"
+},
+"Sketchfab_Scene_Object_20": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_20.res"
+},
+"Sketchfab_Scene_Object_21": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_21.res"
+},
+"Sketchfab_Scene_Object_22": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_22.res"
+},
+"Sketchfab_Scene_Object_23": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_23.res"
+},
+"Sketchfab_Scene_Object_24": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_24.res"
+},
+"Sketchfab_Scene_Object_25": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_25.res"
+},
+"Sketchfab_Scene_Object_26": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_26.res"
+},
+"Sketchfab_Scene_Object_27": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_27.res"
+},
+"Sketchfab_Scene_Object_28": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_28.res"
+},
+"Sketchfab_Scene_Object_29": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_29.res"
+},
+"Sketchfab_Scene_Object_3": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_3.res"
+},
+"Sketchfab_Scene_Object_30": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_30.res"
+},
+"Sketchfab_Scene_Object_31": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_31.res"
+},
+"Sketchfab_Scene_Object_32": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_32.res"
+},
+"Sketchfab_Scene_Object_33": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_33.res"
+},
+"Sketchfab_Scene_Object_34": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_34.res"
+},
+"Sketchfab_Scene_Object_35": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_35.res"
+},
+"Sketchfab_Scene_Object_36": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_36.res"
+},
+"Sketchfab_Scene_Object_37": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_37.res"
+},
+"Sketchfab_Scene_Object_38": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_38.res"
+},
+"Sketchfab_Scene_Object_39": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_39.res"
+},
+"Sketchfab_Scene_Object_4": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_4.res"
+},
+"Sketchfab_Scene_Object_40": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_40.res"
+},
+"Sketchfab_Scene_Object_41": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_41.res"
+},
+"Sketchfab_Scene_Object_42": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_42.res"
+},
+"Sketchfab_Scene_Object_43": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_43.res"
+},
+"Sketchfab_Scene_Object_44": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_44.res"
+},
+"Sketchfab_Scene_Object_45": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_45.res"
+},
+"Sketchfab_Scene_Object_46": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_46.res"
+},
+"Sketchfab_Scene_Object_47": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_47.res"
+},
+"Sketchfab_Scene_Object_48": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_48.res"
+},
+"Sketchfab_Scene_Object_49": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_49.res"
+},
+"Sketchfab_Scene_Object_5": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_5.res"
+},
+"Sketchfab_Scene_Object_50": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_50.res"
+},
+"Sketchfab_Scene_Object_51": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_51.res"
+},
+"Sketchfab_Scene_Object_52": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_52.res"
+},
+"Sketchfab_Scene_Object_53": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_53.res"
+},
+"Sketchfab_Scene_Object_54": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_54.res"
+},
+"Sketchfab_Scene_Object_55": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_55.res"
+},
+"Sketchfab_Scene_Object_56": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_56.res"
+},
+"Sketchfab_Scene_Object_57": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_57.res"
+},
+"Sketchfab_Scene_Object_58": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_58.res"
+},
+"Sketchfab_Scene_Object_59": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_59.res"
+},
+"Sketchfab_Scene_Object_6": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_6.res"
+},
+"Sketchfab_Scene_Object_60": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_60.res"
+},
+"Sketchfab_Scene_Object_61": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_61.res"
+},
+"Sketchfab_Scene_Object_62": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_62.res"
+},
+"Sketchfab_Scene_Object_63": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_63.res"
+},
+"Sketchfab_Scene_Object_64": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_64.res"
+},
+"Sketchfab_Scene_Object_65": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_65.res"
+},
+"Sketchfab_Scene_Object_66": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_66.res"
+},
+"Sketchfab_Scene_Object_67": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_67.res"
+},
+"Sketchfab_Scene_Object_68": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_68.res"
+},
+"Sketchfab_Scene_Object_69": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_69.res"
+},
+"Sketchfab_Scene_Object_7": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_7.res"
+},
+"Sketchfab_Scene_Object_70": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_70.res"
+},
+"Sketchfab_Scene_Object_71": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_71.res"
+},
+"Sketchfab_Scene_Object_72": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_72.res"
+},
+"Sketchfab_Scene_Object_73": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_73.res"
+},
+"Sketchfab_Scene_Object_74": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_74.res"
+},
+"Sketchfab_Scene_Object_75": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_75.res"
+},
+"Sketchfab_Scene_Object_76": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_76.res"
+},
+"Sketchfab_Scene_Object_77": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_77.res"
+},
+"Sketchfab_Scene_Object_78": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_78.res"
+},
+"Sketchfab_Scene_Object_79": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_79.res"
+},
+"Sketchfab_Scene_Object_8": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_8.res"
+},
+"Sketchfab_Scene_Object_80": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_80.res"
+},
+"Sketchfab_Scene_Object_81": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_81.res"
+},
+"Sketchfab_Scene_Object_9": {
+"generate/lightmap_uv": 0,
+"generate/lods": 0,
+"generate/shadow_meshes": 0,
+"lods/normal_merge_angle": 60.0,
+"save_to_file/enabled": true,
+"save_to_file/path": "res://Resources/Meshes/Pack2/Sketchfab_Scene_Object_9.res"
+}
+}
+}
+gltf/naming_version=1
+gltf/embedded_image_handling=1

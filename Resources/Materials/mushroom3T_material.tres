@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://do5tnb23yl65o"]
+
+[resource]
+resource_name = "mushroom3T_material"
+cull_mode = 2
+albedo_color = Color(0.819606, 0.72549, 0.619608, 1)
