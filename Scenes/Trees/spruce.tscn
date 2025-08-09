@@ -9,7 +9,7 @@
 height = 6.5
 radius = 0.4
 
-[node name="TreeBase2" instance=ExtResource("1_sylie")]
+[node name="Spruce" instance=ExtResource("1_sylie")]
 seed_type = "cone"
 species_name = "Spruce"
 

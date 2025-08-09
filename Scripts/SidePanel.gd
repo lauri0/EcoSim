@@ -1,6 +1,9 @@
 extends Panel
 
+const SmallPlant = preload("res://Scripts/SmallPlant.gd")
+
 @onready var trees_button: Button = $SideMenuBar/TypeSelectBar/TreesButton
+@onready var plants_button: Button = $SideMenuBar/TypeSelectBar/PlantsButton if has_node("SideMenuBar/TypeSelectBar/PlantsButton") else null
 # Optional label to show selected species (lives under BottomPanel)
 @onready var selected_label: Label = (
 	get_node("../BottomPanel/BottomMenuBar/SelectedLabel") as Label
@@ -19,20 +22,32 @@ var species_info_label: RichTextLabel
 var species_spawn_button: Button
 var currently_selected_species: String = ""
 
+# Plants species selection popup
+var plants_selection_popup: PopupPanel
+var plants_selection_vbox: VBoxContainer
+
 # Cached per-species info to avoid instantiating scenes on every open
 var species_info_cache: Dictionary = {}
 var species_cache_warmed: bool = false
+var plants_info_cache: Dictionary = {}
+var plants_cache_warmed: bool = false
 
 # A hard‐coded list, or you could load these from your scenes folder
-var species_list = ["Alder","Aspen","Birch","Linden","Maple","Oak","Pine","Rowan","Spruce","Willow"]
+var species_list = ["Birch","Pine","Rowan"]
+var plants_list = ["Grass"]
 
 # Tree spawning state
 var selected_tree_species: String = ""
 var is_tree_spawn_mode: bool = false
 
+# Plant spawning state
+var selected_plant_species: String = ""
+var is_plant_spawn_mode: bool = false
+
 # References to world objects (set from world scene)
 var camera: Camera3D
 var terrain: MeshInstance3D
+var top_right_panel: Panel
 
 # Water level configuration
 @export var water_level: float = 0.0
@@ -40,14 +55,18 @@ var terrain: MeshInstance3D
 func _ready():
 	# Connect UI
 	trees_button.pressed.connect(_on_trees_button_pressed)
+	if plants_button:
+		plants_button.pressed.connect(_on_plants_button_pressed)
 
 	# World references and UI setup
 	_find_world_references()
 	_update_selected_display()
 	_create_tree_info_popup.call_deferred()
 	_create_species_selection_popup.call_deferred()
+	_create_plants_selection_popup.call_deferred()
 	# Warm the species info cache in the background to make browser instant
 	_warm_species_cache.call_deferred()
+	_warm_plants_cache.call_deferred()
 
 func _warm_species_cache():
 	for species_name in species_list:
@@ -55,39 +74,85 @@ func _warm_species_cache():
 			species_info_cache[species_name] = _load_species_info(species_name)
 	species_cache_warmed = true
 
+func _warm_plants_cache():
+	for plant_name in plants_list:
+		if not plants_info_cache.has(plant_name):
+			plants_info_cache[plant_name] = _load_smallplant_info(plant_name)
+	plants_cache_warmed = true
+
 func _load_species_info(species_name: String) -> Dictionary:
 	var tree_scene_path = "res://Scenes/Trees/" + species_name + ".tscn"
 	var tree_scene: PackedScene = load(tree_scene_path)
 	if not tree_scene:
-		return {"name": species_name, "ideal": 0.0, "maturity_years": 0.0, "seed_type": "?"}
+		return {"name": species_name, "ideal": 0.0, "maturity_days": 0.0, "seed_type": "?", "lifespan_days": 0.0, "price": 0, "germ_chance": 0.0, "seed_cycle_days": 0.0, "min_alt": 0.0, "max_alt": 0.0}
 	var tree_instance = tree_scene.instantiate()
 	if not tree_instance or not tree_instance is TreeBase:
 		if tree_instance:
 			tree_instance.queue_free()
-		return {"name": species_name, "ideal": 0.0, "maturity_years": 0.0, "seed_type": "?"}
+		return {"name": species_name, "ideal": 0.0, "maturity_days": 0.0, "seed_type": "?", "lifespan_days": 0.0, "price": 0, "germ_chance": 0.0, "seed_cycle_days": 0.0, "min_alt": 0.0, "max_alt": 0.0}
 	var tree = tree_instance as TreeBase
+	var seed_cycle_days: float = tree.ideal_seed_gen_interval + tree.ideal_seed_maturation_interval
 	var info := {
 		"name": species_name,
 		"ideal": tree.ideal_altitude,
-		"maturity_years": tree.max_growth_progress / 60.0,
-		"seed_type": tree.seed_type
+		"maturity_days": tree.max_growth_progress,
+		"seed_type": tree.seed_type,
+		"lifespan_days": (tree as LifeForm).max_age,
+		"price": (tree as LifeForm).price,
+		"germ_chance": tree.seed_germ_chance,
+		"seed_cycle_days": seed_cycle_days,
+		"min_alt": tree.min_viable_altitude,
+		"max_alt": tree.max_viable_altitude
 	}
 	tree_instance.queue_free()
 	return info
+
+func _load_smallplant_info(plant_name: String) -> Dictionary:
+	var plant_scene_path = "res://Scenes/Plants/" + plant_name + ".tscn"
+	var plant_scene: PackedScene = load(plant_scene_path)
+	if not plant_scene:
+		return {"name": plant_name, "ideal": 0.0, "maturity_days": 0.0, "seed_type": "-", "lifespan_days": 0.0, "price": 0, "germ_chance": 0.0, "seed_cycle_days": 0.0, "min_alt": 0.0, "max_alt": 0.0}
+	var plant_instance = plant_scene.instantiate()
+	if not plant_instance or not plant_instance is SmallPlant:
+		if plant_instance:
+			plant_instance.queue_free()
+		return {"name": plant_name, "ideal": 0.0, "maturity_days": 0.0, "seed_type": "-", "lifespan_days": 0.0, "price": 0, "germ_chance": 0.0, "seed_cycle_days": 0.0, "min_alt": 0.0, "max_alt": 0.0}
+	var plant = plant_instance as SmallPlant
+	var info2 := {
+		"name": plant_name,
+		"ideal": plant.ideal_altitude,
+		"maturity_days": 0.0,
+		"seed_type": "-",
+		"lifespan_days": (plant as LifeForm).max_age,
+		"price": (plant as LifeForm).price,
+		"germ_chance": 0.0,
+		"seed_cycle_days": 0.0,
+		"min_alt": plant.min_viable_altitude,
+		"max_alt": plant.max_viable_altitude
+	}
+	plant_instance.queue_free()
+	return info2
 
 func _find_world_references():
 	var root = get_tree().current_scene
 	camera = root.find_child("Camera3D", true, false) as Camera3D
 	terrain = root.find_child("Terrain", true, false) as MeshInstance3D
+	top_right_panel = root.find_child("TopRightPanel", true, false) as Panel
 	if not camera:
 		print("Warning: Camera3D not found in scene!")
 	if not terrain:
 		print("Warning: Terrain not found in scene!")
+	if not top_right_panel:
+		print("Warning: TopRightPanel not found in scene! Credits will not be deducted")
 
 func _on_trees_button_pressed() -> void:
 	_show_species_browser()
 
+func _on_plants_button_pressed() -> void:
+	_show_plants_browser()
+
 ## Deprecated: selection through PopupMenu removed
+
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -95,6 +160,8 @@ func _input(event: InputEvent) -> void:
 			return
 		if is_tree_spawn_mode and selected_tree_species != "":
 			_spawn_tree_at_mouse_position(event.position)
+		elif is_plant_spawn_mode and selected_plant_species != "":
+			_spawn_plant_at_mouse_position(event.position)
 		else:
 			_try_inspect_tree_at_mouse_position(event.position)
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
@@ -102,6 +169,8 @@ func _input(event: InputEvent) -> void:
 			return
 		if is_tree_spawn_mode:
 			_cancel_tree_spawn_mode()
+		elif is_plant_spawn_mode:
+			_cancel_plant_spawn_mode()
 		else:
 			if tree_info_popup and tree_info_popup.visible:
 				tree_info_popup.hide()
@@ -109,6 +178,12 @@ func _input(event: InputEvent) -> void:
 		# no trees_popup anymore
 		if species_selection_popup and species_selection_popup.visible:
 			species_selection_popup.hide()
+		if plants_selection_popup and plants_selection_popup.visible:
+			plants_selection_popup.hide()
+	elif event is InputEventKey and event.pressed and not event.echo:
+		# Performance test: spawn 500 birch trees at random locations when pressing '0'
+		if event.keycode == KEY_0:
+			_spawn_birch_benchmark()
 
 func _spawn_tree_at_mouse_position(mouse_pos: Vector2) -> void:
 	if not camera or not terrain:
@@ -127,6 +202,24 @@ func _spawn_tree_at_mouse_position(mouse_pos: Vector2) -> void:
 		print("Cannot spawn tree underwater! (terrain height: ", intersection_point.y, ", water level: ", water_level, ")")
 		return
 	_spawn_tree(selected_tree_species, intersection_point)
+
+func _spawn_plant_at_mouse_position(mouse_pos: Vector2) -> void:
+	if not camera or not terrain:
+		print("Camera or terrain reference not set!")
+		return
+	var from = camera.project_ray_origin(mouse_pos)
+	var ray_dir = camera.project_ray_normal(mouse_pos)
+	if ray_dir.y >= 0:
+		print("Ray pointing upward, can't hit terrain")
+		return
+	var intersection_point = _find_terrain_intersection(from, ray_dir)
+	if intersection_point == Vector3.INF:
+		print("No terrain intersection found")
+		return
+	if intersection_point.y <= water_level:
+		print("Cannot spawn plant underwater! (terrain height: ", intersection_point.y, ", water level: ", water_level, ")")
+		return
+	_spawn_plant(selected_plant_species, intersection_point)
 
 func _find_terrain_intersection(ray_origin: Vector3, ray_direction: Vector3) -> Vector3:
 	var terrain_size = 256.0
@@ -164,6 +257,17 @@ func _spawn_tree(species: String, spawn_position: Vector3) -> void:
 	var tree_scene = load(tree_scene_path)
 	if tree_scene:
 		var tree_instance = tree_scene.instantiate()
+		# Charge credits before adding to scene
+		var price: int = 0
+		if tree_instance is LifeForm:
+			price = (tree_instance as LifeForm).price
+		if top_right_panel and top_right_panel.has_method("try_spend"):
+			if not top_right_panel.try_spend(price):
+				print("Not enough credits to spawn ", species, " (cost: ", price, ")")
+				if tree_instance:
+					tree_instance.queue_free()
+				return
+		
 		terrain.get_parent().add_child(tree_instance)
 		var terrain_height = terrain.get_height(spawn_position.x, spawn_position.z)
 		spawn_position.y = terrain_height
@@ -174,16 +278,83 @@ func _spawn_tree(species: String, spawn_position: Vector3) -> void:
 	else:
 		print("Failed to load tree scene: ", tree_scene_path)
 
+func _spawn_plant(plant: String, spawn_position: Vector3) -> void:
+	var plant_scene_path = "res://Scenes/Plants/" + plant + ".tscn"
+	var plant_scene = load(plant_scene_path)
+	if plant_scene:
+		var plant_instance = plant_scene.instantiate()
+		# Charge credits before adding to scene
+		var price: int = 0
+		if plant_instance is LifeForm:
+			price = (plant_instance as LifeForm).price
+		if top_right_panel and top_right_panel.has_method("try_spend"):
+			if not top_right_panel.try_spend(price):
+				print("Not enough credits to spawn ", plant, " (cost: ", price, ")")
+				if plant_instance:
+					plant_instance.queue_free()
+				return
+
+		terrain.get_parent().add_child(plant_instance)
+		var terrain_height = terrain.get_height(spawn_position.x, spawn_position.z)
+		spawn_position.y = terrain_height
+		plant_instance.global_position = spawn_position
+		var random_y_rotation = randf() * TAU
+		plant_instance.rotation.y = random_y_rotation
+		print("Spawned ", plant, " plant at position: ", spawn_position)
+	else:
+		print("Failed to load plant scene: ", plant_scene_path)
+
+func _spawn_tree_no_cost(species: String, spawn_position: Vector3) -> void:
+	var tree_scene_path = "res://Scenes/Trees/" + species + ".tscn"
+	var tree_scene = load(tree_scene_path)
+	if tree_scene and terrain:
+		var tree_instance = tree_scene.instantiate()
+		terrain.get_parent().add_child(tree_instance)
+		var terrain_height = terrain.get_height(spawn_position.x, spawn_position.z)
+		spawn_position.y = terrain_height
+		tree_instance.global_position = spawn_position
+		var random_y_rotation = randf() * TAU
+		tree_instance.rotation.y = random_y_rotation
+	else:
+		print("Failed to load tree scene (free): ", tree_scene_path)
+
+func _spawn_birch_benchmark():
+	if not terrain:
+		print("Terrain not found; cannot run benchmark")
+		return
+	var count: int = 0
+	var attempts: int = 0
+	var max_attempts: int = 2500
+	var terrain_size := 128.0
+	var half := terrain_size * 0.5
+	while count < 125 and attempts < max_attempts:
+		attempts += 1
+		var x = randf_range(-half, half)
+		var z = randf_range(-half, half)
+		var y = terrain.get_height(x, z)
+		if y >= 0.0 and y > water_level:
+			_spawn_tree_no_cost("Birch", Vector3(x, y, z))
+			count += 1
+	print("Benchmark spawn complete: ", count, " birch trees in ", attempts, " attempts")
+
 func _cancel_tree_spawn_mode():
 	is_tree_spawn_mode = false
 	selected_tree_species = ""
 	_update_selected_display()
 	print("Tree spawning cancelled")
 
+func _cancel_plant_spawn_mode():
+	is_plant_spawn_mode = false
+	selected_plant_species = ""
+	_update_selected_display()
+	print("Plant spawning cancelled")
+
 func _update_selected_display():
 	if selected_label:
 		if selected_tree_species != "":
 			selected_label.text = "Selected: " + selected_tree_species
+		elif selected_plant_species != "":
+			selected_label.text = "Selected: " + selected_plant_species
 		else:
 			selected_label.text = ""
 
@@ -250,6 +421,41 @@ func _create_species_selection_popup():
 	# Initial build
 	_rebuild_species_browser_entries()
 
+func _create_plants_selection_popup():
+	plants_selection_popup = PopupPanel.new()
+	plants_selection_popup.size = Vector2(560, 740)
+	plants_selection_popup.set_flag(Window.FLAG_RESIZE_DISABLED, true)
+
+	var root_vbox = VBoxContainer.new()
+	root_vbox.size = Vector2(540, 720)
+	root_vbox.position = Vector2(10, 10)
+	plants_selection_popup.add_child(root_vbox)
+
+	var title_label = Label.new()
+	title_label.text = "Plants"
+	title_label.add_theme_font_size_override("font_size", 18)
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root_vbox.add_child(title_label)
+
+	var scroll = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(540, 680)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	root_vbox.add_child(scroll)
+
+	var list_vbox = VBoxContainer.new()
+	list_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list_vbox)
+
+	plants_selection_vbox = list_vbox
+
+	var ui_root = get_parent()
+	if ui_root:
+		ui_root.add_child(plants_selection_popup)
+	else:
+		get_tree().current_scene.add_child(plants_selection_popup)
+
+	_rebuild_plants_browser_entries()
+
 ## Detailed formatter kept for future but not used by browser
 
 func _format_species_info_compact(species_name: String) -> String:
@@ -283,6 +489,17 @@ func _show_species_browser():
 		popup_pos.x = max(0.0, btn_rect.position.x - species_selection_popup.size.x - 8)
 	species_selection_popup.position = popup_pos
 	species_selection_popup.popup()
+
+func _show_plants_browser():
+	if not plants_selection_popup:
+		return
+	var btn_rect = plants_button.get_global_rect()
+	var popup_pos = Vector2(btn_rect.position.x + btn_rect.size.x + 8, btn_rect.position.y)
+	var screen_size = get_viewport().get_visible_rect().size
+	if popup_pos.x + plants_selection_popup.size.x > screen_size.x:
+		popup_pos.x = max(0.0, btn_rect.position.x - plants_selection_popup.size.x - 8)
+	plants_selection_popup.position = popup_pos
+	plants_selection_popup.popup()
 
 func _rebuild_species_browser_entries():
 	if not species_selection_vbox:
@@ -329,23 +546,92 @@ func _rebuild_species_browser_entries():
 		sep.modulate = Color(1,1,1,0.25)
 		species_selection_vbox.add_child(sep)
 
+func _rebuild_plants_browser_entries():
+	if not plants_selection_vbox:
+		return
+	for child in plants_selection_vbox.get_children():
+		plants_selection_vbox.remove_child(child)
+		child.queue_free()
+	for plant_name in plants_list:
+		var row = HBoxContainer.new()
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.custom_minimum_size = Vector2(520, 54)
+		row.add_theme_constant_override("separation", 12)
+
+		var texts_box = VBoxContainer.new()
+		texts_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		texts_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+
+		var name_label = Label.new()
+		name_label.text = plant_name
+		name_label.add_theme_font_size_override("font_size", 16)
+		texts_box.add_child(name_label)
+
+		var info_label = Label.new()
+		info_label.text = _compact_info_text_for_plant(plant_name)
+		info_label.add_theme_font_size_override("font_size", 12)
+		info_label.modulate = Color(0.9, 0.9, 0.9)
+		texts_box.add_child(info_label)
+
+		row.add_child(texts_box)
+
+		var spawn_button = Button.new()
+		spawn_button.text = "Spawn"
+		spawn_button.custom_minimum_size = Vector2(90, 32)
+		spawn_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		spawn_button.pressed.connect(_on_plant_spawn_button_pressed.bind(plant_name))
+		row.add_child(spawn_button)
+
+		plants_selection_vbox.add_child(row)
+
+		var sep = HSeparator.new()
+		sep.modulate = Color(1,1,1,0.25)
+		plants_selection_vbox.add_child(sep)
+
 func _compact_info_text(species_name: String) -> String:
 	if not species_info_cache.has(species_name):
 		# Load on-demand if cache not ready
 		species_info_cache[species_name] = _load_species_info(species_name)
 	var info: Dictionary = species_info_cache[species_name]
+	var species: String = info.get("name", species_name)
+	var price: int = info.get("price", 0)
+	var lifespan_days: float = info.get("lifespan_days", 0.0)
+	var maturity_days: float = info.get("maturity_days", 0.0)
 	var ideal: float = info.get("ideal", 0.0)
-	var maturity_years: float = info.get("maturity_years", 0.0)
-	var seed_type: String = info.get("seed_type", "?")
-	# Format compact line
-	var maturity_text := _format_years(maturity_years)
-	return "Ideal: %.0fm  |  Maturity: %s  |  Seeds: %s" % [ideal, maturity_text, seed_type]
+	var min_alt: float = info.get("min_alt", 0.0)
+	var max_alt: float = info.get("max_alt", 0.0)
+	var seed_cycle_days: float = info.get("seed_cycle_days", 0.0)
+	var germ_chance: float = info.get("germ_chance", 0.0)
 
-func _format_years(years: float) -> String:
+	var lines: Array[String] = []
+	lines.append("%s - %dCr" % [species, price])
+	lines.append("Lifespan: %s | Maturity at: %s" % [_format_days(lifespan_days), _format_days(maturity_days)])
+	lines.append("Altitude range: %.1fm - %.1fm (Ideal is %.1fm)" % [min_alt, max_alt, ideal])
+	lines.append("Seed production: %s | Germination chance: %d%%" % [_format_days(seed_cycle_days), int(round(germ_chance * 100.0))])
+	return "\n".join(lines)
+
+func _compact_info_text_for_plant(plant_name: String) -> String:
+	if not plants_info_cache.has(plant_name):
+		plants_info_cache[plant_name] = _load_smallplant_info(plant_name)
+	var info: Dictionary = plants_info_cache[plant_name]
+	var species: String = info.get("name", plant_name)
+	var price: int = info.get("price", 0)
+	var lifespan_days: float = info.get("lifespan_days", 0.0)
+	var ideal: float = info.get("ideal", 0.0)
+	var min_alt: float = info.get("min_alt", 0.0)
+	var max_alt: float = info.get("max_alt", 0.0)
+
+	var lines: Array[String] = []
+	lines.append("%s - %dCr" % [species, price])
+	lines.append("Lifespan: %s" % [_format_days(lifespan_days)])
+	lines.append("Altitude range: %.1fm - %.1fm (Ideal is %.1fm)" % [min_alt, max_alt, ideal])
+	return "\n".join(lines)
+
+func _format_days(days: float) -> String:
 	# Show without trailing .0 for whole numbers
-	if years == int(years):
-		return str(int(years)) + "y"
-	return "%.1fy" % years
+	if days == int(days):
+		return str(int(days)) + " days"
+	return "%.1f days" % days
 
 func _on_spawn_button_pressed(species_name: String):
 	selected_tree_species = species_name
@@ -355,6 +641,14 @@ func _on_spawn_button_pressed(species_name: String):
 		species_selection_popup.hide()
 	print("Selected tree species: ", species_name, " - Click on terrain to spawn, right click to cancel")
 
+func _on_plant_spawn_button_pressed(plant_name: String):
+	selected_plant_species = plant_name
+	is_plant_spawn_mode = true
+	_update_selected_display()
+	if plants_selection_popup and plants_selection_popup.visible:
+		plants_selection_popup.hide()
+	print("Selected plant: ", plant_name, " - Click on terrain to spawn, right click to cancel")
+
 func _try_inspect_tree_at_mouse_position(mouse_pos: Vector2):
 	if not camera:
 		return
@@ -362,6 +656,10 @@ func _try_inspect_tree_at_mouse_position(mouse_pos: Vector2):
 	var to = from + camera.project_ray_normal(mouse_pos) * 1000.0
 	var space_state = camera.get_world_3d().direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(from, to)
+	# Explicitly target tree collision layer (layer 3)
+	query.collision_mask = 1 << 2
+	query.collide_with_bodies = true
+	query.collide_with_areas = false
 	var result = space_state.intersect_ray(query)
 	if result and result.collider:
 		var clicked_node = result.collider
@@ -401,7 +699,7 @@ func _show_tree_info(tree: TreeBase, mouse_pos: Vector2):
 		popup_update_timer.start()
 
 func _format_tree_info(tree: TreeBase) -> String:
-	var age_text = "%.1f / %.1f years" % [tree.current_age, tree.max_age]
+	var age_text = "%.1f / %.1f days" % [tree.current_age, tree.max_age]
 	var health_text = "%.1f%%" % (tree.healthPercentage * 100.0)
 	var growth_progress_text = "%.1f%%" % (tree.growth_progress / tree.max_growth_progress * 100.0)
 	var actual_altitude = tree.global_position.y
@@ -450,5 +748,9 @@ func _is_mouse_over_ui(mouse_position: Vector2) -> bool:
 	if species_selection_popup and species_selection_popup.visible:
 		var species_popup_rect = species_selection_popup.get_visible_rect()
 		if species_popup_rect.has_point(mouse_position):
+			return true
+	if plants_selection_popup and plants_selection_popup.visible:
+		var plants_popup_rect = plants_selection_popup.get_visible_rect()
+		if plants_popup_rect.has_point(mouse_position):
 			return true
 	return false

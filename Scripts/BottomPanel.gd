@@ -9,6 +9,7 @@ extends Panel
 @onready var date_label: Label = $BottomMenuBar/DateLabel if has_node("BottomMenuBar/DateLabel") else null
 # Speed label to show current speed
 @onready var speed_label: Label = $BottomMenuBar/SpeedLabel if has_node("BottomMenuBar/SpeedLabel") else null
+@onready var fps_label: Label = $BottomMenuBar/FPSLabel if has_node("BottomMenuBar/FPSLabel") else null
 
 # Speed control buttons
 @onready var speed_0x_button: Button = get_node("BottomMenuBar/0XButton") if has_node("BottomMenuBar/0XButton") else null
@@ -28,43 +29,20 @@ func _ready():
 	exit_button.pressed.connect(_on_exit_pressed)
 	# Connect speed control buttons
 	_connect_speed_buttons()
+	# Initialize FPS label immediately
+	_update_fps_label()
+
+var _fps_accumulator: float = 0.0
+var _fps_update_interval: float = 0.25
+
+func _process(delta: float) -> void:
+	_fps_accumulator += delta
+	if _fps_accumulator >= _fps_update_interval:
+		_fps_accumulator = 0.0
+		_update_fps_label()
 
 func _on_exit_pressed() -> void:
 	get_tree().quit()
-
-## Side panel tree UI moved to SidePanel.gd
-
-
-
-## Tree input handling moved to SidePanel.gd
-
-## Tree spawning logic moved to SidePanel.gd
-
-## Selected species label is now controlled by SidePanel.gd
-
-## Tree inspection popup creation moved to SidePanel.gd
-
-## Species selection popup creation moved to SidePanel.gd
-
-## Species info formatting moved to SidePanel.gd
-
-## Species info popup display moved to SidePanel.gd
-
-## Spawn button handling moved to SidePanel.gd
-
-## Tree inspection logic moved to SidePanel.gd
-
-## TreeBase lookup moved to SidePanel.gd
-
-## Tree info popup display moved to SidePanel.gd
-
-## Tree info formatting moved to SidePanel.gd
-
-## Popup info updating moved to SidePanel.gd
-
-## Popup hide handling moved to SidePanel.gd
-
-
 
 func _on_time_updated(year: int, season: String, hour: int):
 	# Update the date label when time changes (called by TimeManager)
@@ -141,5 +119,10 @@ func _update_speed_label(current_scale: float):
 			if current_scale == int(current_scale):
 				speed_text = str(int(current_scale))
 			speed_label.text = "Speed: " + speed_text + "X"
+
+func _update_fps_label():
+	if fps_label:
+		var fps = int(Engine.get_frames_per_second())
+		fps_label.text = "FPS: " + str(fps)
 
 ## UI hit-testing for trees moved to SidePanel.gd

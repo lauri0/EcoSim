@@ -9,7 +9,7 @@
 height = 6.2
 radius = 0.7
 
-[node name="TreeBase2" instance=ExtResource("1_248wi")]
+[node name="Oak" instance=ExtResource("1_248wi")]
 seed_spawn_point = Vector3(0, 4.5, 0)
 seed_size = 0.2
 seed_mass = 0.004

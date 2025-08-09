@@ -2,7 +2,7 @@ extends Node
 class_name WindManager
 
 # Wind configuration
-@export var base_wind_strength: float = 0.2
+@export var base_wind_strength: float = 2.0
 @export var wind_variation: float = 0.1
 @export var wind_direction_change_rate: float = 0.5  # How fast wind direction changes
 @export var wind_strength_change_rate: float = 0.3   # How fast wind strength changes

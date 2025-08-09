@@ -7,10 +7,17 @@
 height = 5.5
 radius = 0.4
 
-[node name="TreeBase2" instance=ExtResource("1_bgu1d")]
+[node name="Birch" instance=ExtResource("1_bgu1d")]
+max_growth_progress = 1.0
+ideal_seed_gen_interval = 0.05
+ideal_seed_maturation_interval = 0.05
 seed_type = "ovoid"
 seed_size = 0.08
 seed_mass = 0.005
+seed_germ_chance = 0.2
+ideal_altitude = 9.0
+max_viable_altitude = 14.0
+needs_free_radius = 3.2
 species_name = "Birch"
 
 [node name="MeshInstance3D" parent="Model" index="0"]

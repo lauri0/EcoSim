@@ -5,10 +5,15 @@
 
 [node name="TreeBase" type="Node3D"]
 script = ExtResource("1_2cvnp")
+max_growth_progress = 2.0
+ideal_seed_gen_interval = 0.2
+ideal_seed_maturation_interval = 0.2
 seed_spawn_point = Vector3(0, 5, 0)
 seed_size = 0.3
 seed_mass = 0.01
 seed_germ_chance = 0.25
+needs_free_radius = 3.5
+max_age = 8.0
 
 [node name="Model" type="Node3D" parent="."]
 

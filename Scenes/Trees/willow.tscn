@@ -6,7 +6,7 @@
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_1gr1a"]
 height = 5.8
 
-[node name="TreeBase2" instance=ExtResource("1_v6ed1")]
+[node name="Willow" instance=ExtResource("1_v6ed1")]
 seed_spawn_point = Vector3(0, 3.5, 0)
 seed_size = 0.08
 seed_mass = 0.005

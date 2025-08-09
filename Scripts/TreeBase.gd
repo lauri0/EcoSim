@@ -10,12 +10,12 @@ enum TreeState {
 	DYING
 }
 
-## Time (s) that it takes for the tree to mature given 100% health
+## Time (in-game days) that it takes for the tree to mature given 100% health
 @export var max_growth_progress:   float = 60.0
 
-## Time (s) that it takes for the tree to produce a new seed after losing the previous one given 100% health
+## Time (in-game days) to produce a new seed at 100% health
 @export var ideal_seed_gen_interval:  float = 30.0
-## Time that it takes for the seeds to mature after they have spawned on the tree
+## Time (in-game days) for the seeds to mature after they have spawned on the tree
 @export var ideal_seed_maturation_interval: float = 15.0
 ## Used to decide how much health damage intruding other trees deal to the tree
 ## So a small tree intruding into teh needs_free_radius of a big tree won't affect the big tree's health much,
@@ -66,12 +66,24 @@ var is_winter:                     bool = false
 var is_autumn:                     bool = false
 var autumn_progress:               float = 0.0  # 0.0 to 1.0 for gradual color transition
 var winter_progress:               float = 0.0  # 0.0 to 1.0 for gradual winter transition
+var seconds_per_game_day:          float = 90.0
+var time_manager:                  Node
+var winter_transition_material:    StandardMaterial3D
+var autumn_transition_material:    StandardMaterial3D
+var tree_manager:                  Node
+var _season_accumulator:           float = 0.0
+var _season_update_interval:       float = 5.0
+var _seed_accumulator:             float = 0.0
+var _seed_update_interval:         float = 0.25
 
 func _ready():
 	# Initialize tree
-	time_until_next_repro_check = ideal_seed_gen_interval
+	seconds_per_game_day = _get_seconds_per_game_day()
+	time_until_next_repro_check = ideal_seed_gen_interval * seconds_per_game_day
 	growth_progress = 0.0
 	state = TreeState.GROWING
+	# Stagger seasonal updates per tree to avoid frame spikes
+	_season_accumulator = randf_range(0.0, _season_update_interval)
 	
 	# Health will be calculated based on altitude in first _update_health() call
 	
@@ -86,6 +98,8 @@ func _ready():
 		mesh_instance = model_node.find_child("MeshInstance3D", true, false) as MeshInstance3D
 		if mesh_instance:
 			_setup_seasonal_materials()
+			# Disable shadow casting to reduce GPU cost
+			mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		else:
 			print("Warning: No MeshInstance3D found in tree ", species_name)
 	else:
@@ -104,8 +118,27 @@ func _ready():
 	# Connect to TimeManager for seasonal changes
 	_connect_to_time_manager.call_deferred()
 
+	# Register with TreeManager for batched logic updates
+	var root = get_tree().current_scene
+	tree_manager = root.find_child("TreeManager", true, false)
+	if tree_manager and tree_manager.has_method("register_tree"):
+		tree_manager.register_tree(self)
+
 func _process(delta):
-	current_age += delta
+	# Lightweight visual work only and throttled seasonal transitions
+	_update_scale()
+	_season_accumulator += delta
+	if _season_accumulator >= _season_update_interval:
+		_season_accumulator = 0.0
+		# Throttled seasonal transitions to reduce spikes
+		if is_autumn and autumn_leaf_material:
+			_update_autumn_color_transition()
+		elif is_winter and winter_leaf_material:
+			_update_winter_color_transition()
+
+func _logic_update(dt: float) -> void:
+	# Age tracked in in-game days
+	current_age += dt / seconds_per_game_day
 	
 	# Check for age-based death
 	if current_age >= max_age and state != TreeState.DYING:
@@ -115,26 +148,24 @@ func _process(delta):
 	# Update health based on environmental conditions
 	_update_health()
 	
-	# Update growth based on state
-	_update_growth(delta)
-	
-	# Update visual scale (performance optimized)
-	_update_scale()
-	
-	# Update seasonal color progressions
-	if is_autumn and autumn_leaf_material:
-		_update_autumn_color_transition()
-	elif is_winter and winter_leaf_material:
-		_update_winter_color_transition()
-	
-	# Handle seed lifecycle
-	_handle_seed_lifecycle(delta)
-	
-	# Handle reproduction
-	time_until_next_repro_check -= delta
+	# Update growth based on state using the batched dt
+	_update_growth(dt)
+
+	# Handle seed lifecycle at a reduced tick
+	_seed_accumulator += dt
+	if _seed_accumulator >= _seed_update_interval:
+		_handle_seed_lifecycle(_seed_accumulator)
+		_seed_accumulator = 0.0
+
+	# Handle reproduction with seconds-based timer
+	time_until_next_repro_check -= dt
 	if time_until_next_repro_check <= 0.0:
 		_try_reproduce()
-		time_until_next_repro_check = ideal_seed_gen_interval
+		time_until_next_repro_check = ideal_seed_gen_interval * seconds_per_game_day
+
+func _exit_tree():
+	if tree_manager and tree_manager.has_method("unregister_tree"):
+		tree_manager.unregister_tree(self)
 
 func _try_reproduce():
 	# check altitude, age, maybe spawn a new TreeBase instance…
@@ -165,7 +196,7 @@ func _update_growth(delta: float):
 	
 	match state:
 		TreeState.GROWING:
-			# Calculate growth rate based on health and environmental factors
+			# Calculate growth rate in days/second based on health
 			var growth_rate = _calculate_growth_rate()
 			growth_progress += delta * growth_rate
 			
@@ -181,7 +212,8 @@ func _update_growth(delta: float):
 				state_percentage = 0.0
 		
 		TreeState.SEED_PRODUCTION:
-			seed_production_progress += delta * healthPercentage
+			# Progress measured in in-game days
+			seed_production_progress += (delta / seconds_per_game_day) * healthPercentage
 			seed_production_progress = min(seed_production_progress, ideal_seed_gen_interval)
 			state_percentage = seed_production_progress / ideal_seed_gen_interval
 			
@@ -191,7 +223,8 @@ func _update_growth(delta: float):
 				state_percentage = 0.0
 		
 		TreeState.SEED_MATURATION:
-			seed_maturation_progress += delta * healthPercentage
+			# Progress measured in in-game days
+			seed_maturation_progress += (delta / seconds_per_game_day) * healthPercentage
 			seed_maturation_progress = min(seed_maturation_progress, ideal_seed_maturation_interval)
 			state_percentage = seed_maturation_progress / ideal_seed_maturation_interval
 			
@@ -218,20 +251,17 @@ func _update_growth(delta: float):
 ## _update_health now provided by Plant
 
 func _calculate_growth_rate() -> float:
-	# Base rate should be 1.0 progress units per second at 100% health
-	var base_rate = 1.0
-	
-	# Health affects growth rate (calculated automatically based on altitude)
+	# Base rate is 1.0 progress unit per in-game day at 100% health,
+	# expressed as days per real second
+	var base_rate_days_per_second: float = 1.0 / seconds_per_game_day
 	var health_factor = healthPercentage
-	
-	# Final rate: max 1.0 per second with perfect health
-	return base_rate * health_factor
+	return base_rate_days_per_second * health_factor
 
 # Removed _calculate_altitude_factor() - health is now calculated directly in _update_health()
 
 func _update_scale():
 	# Only update scale periodically for performance
-	if Time.get_ticks_msec() - last_scale_update < 100:  # Update every 100ms
+	if Time.get_ticks_msec() - last_scale_update < 250:  # Update every 250ms
 		return
 	
 	last_scale_update = Time.get_ticks_msec()
@@ -263,6 +293,17 @@ func get_state_name() -> String:
 			return "UNKNOWN"
 
 func _setup_seasonal_materials():
+	# Ensure all mesh surfaces have a valid material to avoid renderer null-material errors
+	if mesh_instance and mesh_instance.mesh:
+		var surface_count = mesh_instance.mesh.get_surface_count()
+		for i in surface_count:
+			var override_mat: Material = mesh_instance.get_surface_override_material(i)
+			var mesh_mat: Material = mesh_instance.mesh.surface_get_material(i) if mesh_instance.mesh else null
+			if not override_mat and not mesh_mat:
+				var default_mat = StandardMaterial3D.new()
+				default_mat.resource_name = "Default Surface Material"
+				mesh_instance.set_surface_override_material(i, default_mat)
+
 	# Determine leaf material index based on tree species
 	var leaf_material_index = _get_leaf_material_index()
 	
@@ -292,10 +333,10 @@ func _setup_seasonal_materials():
 			if autumn_color != Color.TRANSPARENT:  # Only create autumn material if species changes color
 				autumn_leaf_material.vertex_color_use_as_albedo = true
 				autumn_leaf_material.albedo_color = autumn_color
-				print("Created seasonal materials for ", species_name, " (leaf material index: ", leaf_material_index, ", autumn color: ", autumn_color, ")")
+				#print("Created seasonal materials for ", species_name, " (leaf material index: ", leaf_material_index, ", autumn color: ", autumn_color, ")")
 			else:
 				autumn_leaf_material = null  # Conifers don't get autumn colors
-				print("Created winter material for ", species_name, " (no autumn color change)")
+				#print("Created winter material for ", species_name, " (no autumn color change)")
 		else:
 			print("Warning: No leaf material found for ", species_name, " at index ", leaf_material_index)
 	else:
@@ -324,7 +365,7 @@ func _get_autumn_color_for_species() -> Color:
 func _connect_to_time_manager():
 	# Find TimeManager and connect to season changes
 	var root = get_tree().current_scene
-	var time_manager = root.find_child("TimeManager", true, false)
+	time_manager = root.find_child("TimeManager", true, false)
 	
 	if time_manager and time_manager.has_signal("season_changed"):
 		time_manager.season_changed.connect(_on_season_changed)
@@ -334,9 +375,9 @@ func _connect_to_time_manager():
 			var current_season = time_manager.get_current_season()
 			var current_winter_factor = time_manager.get_current_winter_factor()
 			_on_season_changed(current_season, current_winter_factor)
-			print("Tree ", species_name, " connected to TimeManager and applied current season: ", current_season)
-		else:
-			print("Tree ", species_name, " connected to TimeManager")
+			#print("Tree ", species_name, " connected to TimeManager and applied current season: ", current_season)
+		#else:
+			#print("Tree ", species_name, " connected to TimeManager")
 	else:
 		print("Warning: Could not connect to TimeManager season signal for ", species_name)
 
@@ -359,14 +400,14 @@ func _update_seasonal_appearance():
 	if is_winter:
 		# Use gradual winter transition
 		_update_winter_color_transition()
-		print("Tree ", species_name, " updating winter appearance with gradual transition (leaf index: ", leaf_material_index, ")")
+		#print("Tree ", species_name, " updating winter appearance with gradual transition (leaf index: ", leaf_material_index, ")")
 	elif is_autumn and autumn_leaf_material:
 		# For autumn, we need to gradually interpolate between normal and autumn colors
 		_update_autumn_color_transition()
 	else:
 		# Switch back to original leaves
 		mesh_instance.set_surface_override_material(leaf_material_index, original_leaf_material)
-		print("Tree ", species_name, " switched to normal appearance (leaf index: ", leaf_material_index, ")")
+		#print("Tree ", species_name, " switched to normal appearance (leaf index: ", leaf_material_index, ")")
 
 func _create_interpolated_material(from_color: Color, to_color: Color, progress: float, material_name: String) -> StandardMaterial3D:
 	# Create an interpolated material for gradual color transition
@@ -399,7 +440,7 @@ func _update_autumn_color_transition():
 	
 	# Get the current time from TimeManager to calculate autumn progress
 	var root = get_tree().current_scene
-	var time_manager = root.find_child("TimeManager", true, false)
+	time_manager = root.find_child("TimeManager", true, false)
 	
 	if time_manager and time_manager.has_method("get_current_hour"):
 		var current_hour = time_manager.get_current_hour()
@@ -420,7 +461,7 @@ func _update_winter_color_transition():
 	
 	# Get the current time from TimeManager to calculate winter progress
 	var root = get_tree().current_scene
-	var time_manager = root.find_child("TimeManager", true, false)
+	time_manager = root.find_child("TimeManager", true, false)
 	
 	if time_manager and time_manager.has_method("get_current_hour"):
 		var current_hour = time_manager.get_current_hour()
@@ -480,7 +521,7 @@ func _spawn_seed_on_tree():
 	
 	spawned_seed = _create_seed_visual(world_spawn_position)
 	seed_ready_to_fly = true
-	print("Tree ", species_name, " spawned 1 seed at designated spawn point")
+	#print("Tree ", species_name, " spawned 1 seed at designated spawn point")
 
 func _create_seed_visual(spawn_position: Vector3) -> Node3D:
 	# Create a visual representation of seeds on tree with proper shape
@@ -516,40 +557,33 @@ func _get_species_seed_color() -> Color:
 		_:
 			return Color(0.6, 0.4, 0.2)  # Default brown
 
+
 func _release_seed():
-	# Convert visual seed to physics-based seed
-	var seed_scene = preload("res://Scripts/Seed.gd")
-	
+	# Convert visual seed to a lightweight non-physics seed node
+	var seed_script = preload("res://Scripts/Seed.gd")
 	if spawned_seed:
-		# Create physics seed
-		var physics_seed = RigidBody3D.new()
-		physics_seed.set_script(seed_scene)
-		
+		var seed_node := Node3D.new()
+		seed_node.set_script(seed_script)
 		# Configure seed properties
-		physics_seed.species_name = species_name
-		physics_seed.seed_type = seed_type
-		physics_seed.base_size = seed_size
-		physics_seed.mass_kg = seed_mass
-		physics_seed.germination_chance = seed_germ_chance
-		physics_seed.parent_tree = self
-		
+		seed_node.species_name = species_name
+		seed_node.seed_type = seed_type
+		seed_node.base_size = seed_size
+		seed_node.mass_kg = seed_mass
+		seed_node.germination_chance = seed_germ_chance
+		seed_node.parent_tree = self
 		# Position the seed
-		get_parent().add_child(physics_seed)
-		physics_seed.global_position = spawned_seed.global_position
-		
-		# Add some initial velocity
-		var initial_velocity = Vector3(
-			randf_range(1, 2),
-			randf_range(2, 3),
-			randf_range(1, 2)
-		).normalized() * randf_range(1, 3)
-		physics_seed.linear_velocity = initial_velocity
-		
+		get_parent().add_child(seed_node)
+		seed_node.global_position = spawned_seed.global_position
 		# Remove visual seed
 		spawned_seed.queue_free()
 		spawned_seed = null
+		# Register seed with TreeManager for batched updates
+		var root = get_tree().current_scene
+		var manager = root.find_child("TreeManager", true, false)
+		if manager and manager.has_method("register_seed"):
+			manager.register_seed(seed_node)
 	
-	print("Tree ", species_name, " released seed into the wind!")
+	#print("Tree ", species_name, " released seed into the wind!")
 
 # Death system functions
 func _start_dying():
