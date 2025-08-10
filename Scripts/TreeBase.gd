@@ -70,11 +70,43 @@ var seconds_per_game_day:          float = 90.0
 var time_manager:                  Node
 var winter_transition_material:    StandardMaterial3D
 var autumn_transition_material:    StandardMaterial3D
+var transition_material:           StandardMaterial3D
 var tree_manager:                  Node
 var _season_accumulator:           float = 0.0
 var _season_update_interval:       float = 5.0
 var _seed_accumulator:             float = 0.0
 var _seed_update_interval:         float = 0.25
+
+# Static caches for seasonal/default materials
+static var _winter_material_cache: Dictionary = {}
+static var _autumn_material_cache: Dictionary = {}
+static var _default_surface_material: StandardMaterial3D
+
+static func _get_default_surface_material() -> StandardMaterial3D:
+	if _default_surface_material == null:
+		_default_surface_material = StandardMaterial3D.new()
+		_default_surface_material.resource_name = "Default Surface Material"
+	return _default_surface_material
+
+static func _get_cached_winter_material(species: String, base_resource_name: String) -> StandardMaterial3D:
+	if not _winter_material_cache.has(species):
+		var m := StandardMaterial3D.new()
+		m.resource_name = "Winter " + base_resource_name
+		m.vertex_color_use_as_albedo = true
+		m.albedo_color = Color(0.9, 0.9, 0.95, 1.0)
+		m.emission_enabled = true
+		m.emission = Color(0.1, 0.1, 0.15)
+		_winter_material_cache[species] = m
+	return _winter_material_cache[species]
+
+static func _get_cached_autumn_material(species: String, autumn_color: Color, base_resource_name: String) -> StandardMaterial3D:
+	if not _autumn_material_cache.has(species):
+		var m := StandardMaterial3D.new()
+		m.resource_name = "Autumn " + base_resource_name
+		m.vertex_color_use_as_albedo = true
+		m.albedo_color = autumn_color
+		_autumn_material_cache[species] = m
+	return _autumn_material_cache[species]
 
 func _ready():
 	# Initialize tree
@@ -229,11 +261,9 @@ func _update_growth(delta: float):
 			state_percentage = seed_maturation_progress / ideal_seed_maturation_interval
 			
 			if seed_maturation_progress >= ideal_seed_maturation_interval:
-				# Release seed before transitioning back to seed production
-				if seed_ready_to_fly and spawned_seed:
-					_release_seed()
-					seed_ready_to_fly = false
-				
+				# Keep seed attached like berries; ensure a visual seed exists
+				if not is_instance_valid(spawned_seed):
+					_spawn_seed_on_tree()
 				# Go straight back to seed production, skip MATURE state
 				state = TreeState.SEED_PRODUCTION
 				seed_maturation_progress = 0.0
@@ -300,9 +330,7 @@ func _setup_seasonal_materials():
 			var override_mat: Material = mesh_instance.get_surface_override_material(i)
 			var mesh_mat: Material = mesh_instance.mesh.surface_get_material(i) if mesh_instance.mesh else null
 			if not override_mat and not mesh_mat:
-				var default_mat = StandardMaterial3D.new()
-				default_mat.resource_name = "Default Surface Material"
-				mesh_instance.set_surface_override_material(i, default_mat)
+				mesh_instance.set_surface_override_material(i, _get_default_surface_material())
 
 	# Determine leaf material index based on tree species
 	var leaf_material_index = _get_leaf_material_index()
@@ -316,27 +344,14 @@ func _setup_seasonal_materials():
 		if not original_leaf_material and mesh_instance.mesh:
 			original_leaf_material = mesh_instance.mesh.surface_get_material(leaf_material_index)
 		
-		# Create seasonal versions of leaf material
+		# Create or reuse seasonal versions of leaf material
 		if original_leaf_material:
-			# Create winter material
-			winter_leaf_material = StandardMaterial3D.new()
-			winter_leaf_material.resource_name = "Winter " + original_leaf_material.resource_name
-			winter_leaf_material.vertex_color_use_as_albedo = true
-			winter_leaf_material.albedo_color = Color(0.9, 0.9, 0.95, 1.0)  # Snowy white
-			winter_leaf_material.emission_enabled = true
-			winter_leaf_material.emission = Color(0.1, 0.1, 0.15)  # Slight blue tint
-			
-			# Create autumn material based on species
-			autumn_leaf_material = StandardMaterial3D.new()
-			autumn_leaf_material.resource_name = "Autumn " + original_leaf_material.resource_name
+			winter_leaf_material = _get_cached_winter_material(species_name, original_leaf_material.resource_name)
 			var autumn_color = _get_autumn_color_for_species()
-			if autumn_color != Color.TRANSPARENT:  # Only create autumn material if species changes color
-				autumn_leaf_material.vertex_color_use_as_albedo = true
-				autumn_leaf_material.albedo_color = autumn_color
-				#print("Created seasonal materials for ", species_name, " (leaf material index: ", leaf_material_index, ", autumn color: ", autumn_color, ")")
+			if autumn_color != Color.TRANSPARENT:
+				autumn_leaf_material = _get_cached_autumn_material(species_name, autumn_color, original_leaf_material.resource_name)
 			else:
-				autumn_leaf_material = null  # Conifers don't get autumn colors
-				#print("Created winter material for ", species_name, " (no autumn color change)")
+				autumn_leaf_material = null
 		else:
 			print("Warning: No leaf material found for ", species_name, " at index ", leaf_material_index)
 	else:
@@ -409,22 +424,21 @@ func _update_seasonal_appearance():
 		mesh_instance.set_surface_override_material(leaf_material_index, original_leaf_material)
 		#print("Tree ", species_name, " switched to normal appearance (leaf index: ", leaf_material_index, ")")
 
-func _create_interpolated_material(from_color: Color, to_color: Color, progress: float, material_name: String) -> StandardMaterial3D:
-	# Create an interpolated material for gradual color transition
-	var interpolated_material = StandardMaterial3D.new()
-	interpolated_material.resource_name = material_name + " " + original_leaf_material.resource_name
-	interpolated_material.vertex_color_use_as_albedo = true
-	
-	# Interpolate between colors
+func _ensure_transition_material():
+	if transition_material == null:
+		transition_material = StandardMaterial3D.new()
+		transition_material.resource_name = "Transition " + (original_leaf_material.resource_name if original_leaf_material else species_name)
+		transition_material.vertex_color_use_as_albedo = true
+
+func _apply_transition(from_color: Color, to_color: Color, progress: float, is_winter_transition: bool) -> void:
+	_ensure_transition_material()
 	var current_color = from_color.lerp(to_color, progress)
-	interpolated_material.albedo_color = current_color
-	
-	# For winter materials, also add the emission effect
-	if material_name.begins_with("Winter"):
-		interpolated_material.emission_enabled = true
-		interpolated_material.emission = Color(0.1, 0.1, 0.15) * progress  # Scale emission with progress
-	
-	return interpolated_material
+	transition_material.albedo_color = current_color
+	if is_winter_transition:
+		transition_material.emission_enabled = true
+		transition_material.emission = Color(0.1, 0.1, 0.15) * progress
+	var leaf_index = _get_leaf_material_index()
+	mesh_instance.set_surface_override_material(leaf_index, transition_material)
 
 func _get_original_leaf_color() -> Color:
 	# Get original material color (default to green if we can't get it)
@@ -450,10 +464,8 @@ func _update_autumn_color_transition():
 		var original_color = _get_original_leaf_color()
 		var autumn_color = autumn_leaf_material.albedo_color
 		
-		# Create and apply the interpolated material
-		var interpolated_material = _create_interpolated_material(original_color, autumn_color, autumn_progress, "Autumn Transition")
-		var leaf_material_index = _get_leaf_material_index()
-		mesh_instance.set_surface_override_material(leaf_material_index, interpolated_material)
+		# Apply transition using a single reusable material
+		_apply_transition(original_color, autumn_color, autumn_progress, false)
 
 func _update_winter_color_transition():
 	if not winter_leaf_material or not original_leaf_material:
@@ -494,10 +506,8 @@ func _update_winter_color_transition():
 			mesh_instance.set_surface_override_material(leaf_material_index, winter_leaf_material)
 			return
 		
-		# Create and apply the interpolated material
-		var interpolated_material = _create_interpolated_material(from_color, to_color, transition_progress, "Winter Transition")
-		var leaf_mat_index = _get_leaf_material_index()
-		mesh_instance.set_surface_override_material(leaf_mat_index, interpolated_material)
+		# Apply transition using a single reusable material
+		_apply_transition(from_color, to_color, transition_progress, true)
 
 func _handle_seed_lifecycle(_delta: float):
 	match state:
@@ -524,22 +534,19 @@ func _spawn_seed_on_tree():
 	#print("Tree ", species_name, " spawned 1 seed at designated spawn point")
 
 func _create_seed_visual(spawn_position: Vector3) -> Node3D:
-	# Create a visual representation of seeds on tree with proper shape
+	# Create a simple spherical seed visual and attach to the tree
 	var seed_visual = Node3D.new()
 	var mesh_instance_seed = MeshInstance3D.new()
-	
-	# Use the shared seed mesh creation function from Seed class
-	mesh_instance_seed.mesh = Seed.create_seed_mesh(seed_type, seed_size)
-	
-	# Set material based on species
-	var material = StandardMaterial3D.new()
-	material.albedo_color = _get_species_seed_color()
-	mesh_instance_seed.material_override = material
-	
+	var sphere = SphereMesh.new()
+	sphere.radius = max(0.02, seed_size)
+	sphere.height = sphere.radius * 2.0
+	mesh_instance_seed.mesh = sphere
+	var m := StandardMaterial3D.new()
+	m.albedo_color = _get_species_seed_color()
+	mesh_instance_seed.material_override = m
 	seed_visual.add_child(mesh_instance_seed)
 	add_child(seed_visual)
 	seed_visual.global_position = spawn_position
-	
 	return seed_visual
 
 func _get_species_seed_color() -> Color:
@@ -558,32 +565,7 @@ func _get_species_seed_color() -> Color:
 			return Color(0.6, 0.4, 0.2)  # Default brown
 
 
-func _release_seed():
-	# Convert visual seed to a lightweight non-physics seed node
-	var seed_script = preload("res://Scripts/Seed.gd")
-	if spawned_seed:
-		var seed_node := Node3D.new()
-		seed_node.set_script(seed_script)
-		# Configure seed properties
-		seed_node.species_name = species_name
-		seed_node.seed_type = seed_type
-		seed_node.base_size = seed_size
-		seed_node.mass_kg = seed_mass
-		seed_node.germination_chance = seed_germ_chance
-		seed_node.parent_tree = self
-		# Position the seed
-		get_parent().add_child(seed_node)
-		seed_node.global_position = spawned_seed.global_position
-		# Remove visual seed
-		spawned_seed.queue_free()
-		spawned_seed = null
-		# Register seed with TreeManager for batched updates
-		var root = get_tree().current_scene
-		var manager = root.find_child("TreeManager", true, false)
-		if manager and manager.has_method("register_seed"):
-			manager.register_seed(seed_node)
-	
-	#print("Tree ", species_name, " released seed into the wind!")
+## Removed seed release and germination
 
 # Death system functions
 func _start_dying():

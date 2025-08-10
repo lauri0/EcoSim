@@ -1,0 +1,25 @@
+[gd_scene load_steps=3 format=3 uid="uid://cj23f4wr846i5"]
+
+[ext_resource type="Script" uid="uid://dmesj1ewtumkd" path="res://Scripts/BerryBush.gd" id="1_1"]
+
+[sub_resource type="SphereShape3D" id="1"]
+radius = 0.25
+
+[node name="BerryBush" type="Node3D"]
+script = ExtResource("1_1")
+ideal_altitude = 6.0
+max_viable_altitude = 16.0
+blocking_radius = 2.0
+needs_free_radius = 2.5
+species_name = "BerryBush"
+price = 4
+max_age = 3.0
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+collision_layer = 8
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+shape = SubResource("1")

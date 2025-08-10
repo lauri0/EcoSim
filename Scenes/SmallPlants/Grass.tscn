@@ -1,0 +1,32 @@
+[gd_scene load_steps=4 format=3 uid="uid://cg02oogjxk7jd"]
+
+[ext_resource type="Script" uid="uid://bbw2141vr43pt" path="res://Scripts/SmallPlant.gd" id="1_7hfna"]
+[ext_resource type="ArrayMesh" uid="uid://ba125uaresmin" path="res://Resources/Meshes/SmallPlants/Grass.res" id="2_8cq00"]
+
+[sub_resource type="SphereShape3D" id="1"]
+radius = 0.3
+
+[node name="Grass" type="Node3D"]
+script = ExtResource("1_7hfna")
+ideal_altitude = 5.0
+max_viable_altitude = 14.0
+blocking_radius = 2.0
+needs_free_radius = 2.0
+forbidden_neighbors = Array[String](["Birch", "Pine", "Rowan", "Aspen", "Maple", "Oak", "Spruce", "Willow", "Linden"])
+species_name = "Grass"
+price = 2
+max_age = 2.0
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0)
+cast_shadow = 0
+mesh = ExtResource("2_8cq00")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+collision_layer = 8
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+shape = SubResource("1")

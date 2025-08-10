@@ -1,7 +1,5 @@
 extends Panel
 
-const SmallPlant = preload("res://Scripts/SmallPlant.gd")
-
 @onready var trees_button: Button = $SideMenuBar/TypeSelectBar/TreesButton
 @onready var plants_button: Button = $SideMenuBar/TypeSelectBar/PlantsButton if has_node("SideMenuBar/TypeSelectBar/PlantsButton") else null
 # Optional label to show selected species (lives under BottomPanel)
@@ -13,6 +11,7 @@ const SmallPlant = preload("res://Scripts/SmallPlant.gd")
 var tree_info_popup: PopupPanel
 var tree_info_label: RichTextLabel
 var currently_inspected_tree: TreeBase
+var currently_inspected_plant: SmallPlant
 var popup_update_timer: Timer
 
 # Tree species selection popup
@@ -25,16 +24,17 @@ var currently_selected_species: String = ""
 # Plants species selection popup
 var plants_selection_popup: PopupPanel
 var plants_selection_vbox: VBoxContainer
-
-# Cached per-species info to avoid instantiating scenes on every open
+ 
+ # Cached per-species info to avoid instantiating scenes on every open
 var species_info_cache: Dictionary = {}
 var species_cache_warmed: bool = false
 var plants_info_cache: Dictionary = {}
 var plants_cache_warmed: bool = false
+ 
 
 # A hard‐coded list, or you could load these from your scenes folder
 var species_list = ["Birch","Pine","Rowan"]
-var plants_list = ["Grass"]
+var plants_list = ["Grass", "Lingonberry"]
 
 # Tree spawning state
 var selected_tree_species: String = ""
@@ -108,7 +108,7 @@ func _load_species_info(species_name: String) -> Dictionary:
 	return info
 
 func _load_smallplant_info(plant_name: String) -> Dictionary:
-	var plant_scene_path = "res://Scenes/Plants/" + plant_name + ".tscn"
+	var plant_scene_path = "res://Scenes/SmallPlants/" + plant_name + ".tscn"
 	var plant_scene: PackedScene = load(plant_scene_path)
 	if not plant_scene:
 		return {"name": plant_name, "ideal": 0.0, "maturity_days": 0.0, "seed_type": "-", "lifespan_days": 0.0, "price": 0, "germ_chance": 0.0, "seed_cycle_days": 0.0, "min_alt": 0.0, "max_alt": 0.0}
@@ -163,7 +163,7 @@ func _input(event: InputEvent) -> void:
 		elif is_plant_spawn_mode and selected_plant_species != "":
 			_spawn_plant_at_mouse_position(event.position)
 		else:
-			_try_inspect_tree_at_mouse_position(event.position)
+			_try_inspect_entity_at_mouse_position(event.position)
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
 		if _is_mouse_over_ui(event.position):
 			return
@@ -256,6 +256,11 @@ func _spawn_tree(species: String, spawn_position: Vector3) -> void:
 	var tree_scene_path = "res://Scenes/Trees/" + species + ".tscn"
 	var tree_scene = load(tree_scene_path)
 	if tree_scene:
+		# Validate space and neighbor constraints before spending
+		var tm = get_tree().current_scene.find_child("TreeManager", true, false)
+		if tm and tm.has_method("can_spawn_plant_at"):
+			if not tm.can_spawn_plant_at(tree_scene, spawn_position):
+				return
 		var tree_instance = tree_scene.instantiate()
 		# Charge credits before adding to scene
 		var price: int = 0
@@ -279,9 +284,14 @@ func _spawn_tree(species: String, spawn_position: Vector3) -> void:
 		print("Failed to load tree scene: ", tree_scene_path)
 
 func _spawn_plant(plant: String, spawn_position: Vector3) -> void:
-	var plant_scene_path = "res://Scenes/Plants/" + plant + ".tscn"
+	var plant_scene_path = "res://Scenes/SmallPlants/" + plant + ".tscn"
 	var plant_scene = load(plant_scene_path)
 	if plant_scene:
+		# Validate space and neighbor constraints before spending
+		var tm = get_tree().current_scene.find_child("TreeManager", true, false)
+		if tm and tm.has_method("can_spawn_plant_at"):
+			if not tm.can_spawn_plant_at(plant_scene, spawn_position):
+				return
 		var plant_instance = plant_scene.instantiate()
 		# Charge credits before adding to scene
 		var price: int = 0
@@ -532,12 +542,24 @@ func _rebuild_species_browser_entries():
 
 		row.add_child(texts_box)
 
+
+		var buttons_box = VBoxContainer.new()
+		buttons_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		var spawn_button = Button.new()
 		spawn_button.text = "Spawn"
-		spawn_button.custom_minimum_size = Vector2(90, 32)
+		spawn_button.custom_minimum_size = Vector2(110, 26)
 		spawn_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		spawn_button.pressed.connect(_on_spawn_button_pressed.bind(species_name))
-		row.add_child(spawn_button)
+		buttons_box.add_child(spawn_button)
+
+		var repro_button = Button.new()
+		repro_button.text = "+1 Reproduction"
+		repro_button.custom_minimum_size = Vector2(110, 24)
+		repro_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		repro_button.pressed.connect(_on_add_reproduction_pressed.bind(species_name))
+		buttons_box.add_child(repro_button)
+
+		row.add_child(buttons_box)
 
 		species_selection_vbox.add_child(row)
 
@@ -575,12 +597,23 @@ func _rebuild_plants_browser_entries():
 
 		row.add_child(texts_box)
 
+		var buttons_box = VBoxContainer.new()
+		buttons_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		var spawn_button = Button.new()
 		spawn_button.text = "Spawn"
-		spawn_button.custom_minimum_size = Vector2(90, 32)
+		spawn_button.custom_minimum_size = Vector2(110, 26)
 		spawn_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		spawn_button.pressed.connect(_on_plant_spawn_button_pressed.bind(plant_name))
-		row.add_child(spawn_button)
+		buttons_box.add_child(spawn_button)
+
+		var repro_button = Button.new()
+		repro_button.text = "+1 Reproduction"
+		repro_button.custom_minimum_size = Vector2(110, 24)
+		repro_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		repro_button.pressed.connect(_on_add_reproduction_pressed.bind(plant_name))
+		buttons_box.add_child(repro_button)
+
+		row.add_child(buttons_box)
 
 		plants_selection_vbox.add_child(row)
 
@@ -600,14 +633,24 @@ func _compact_info_text(species_name: String) -> String:
 	var ideal: float = info.get("ideal", 0.0)
 	var min_alt: float = info.get("min_alt", 0.0)
 	var max_alt: float = info.get("max_alt", 0.0)
-	var seed_cycle_days: float = info.get("seed_cycle_days", 0.0)
-	var germ_chance: float = info.get("germ_chance", 0.0)
+	var _seed_cycle_days: float = info.get("seed_cycle_days", 0.0)
+	var _germ_chance: float = info.get("germ_chance", 0.0)
+
+	# Query manager for totals and reproduction
+	var tm = get_tree().current_scene.find_child("TreeManager", true, false)
+	var total_living := 0
+	var repro_per_day := 0.0
+	if tm:
+		if tm.has_method("get_total_living"):
+			total_living = tm.get_total_living(species)
+		if tm.has_method("get_reproduction"):
+			repro_per_day = tm.get_reproduction(species)
 
 	var lines: Array[String] = []
-	lines.append("%s - %dCr" % [species, price])
+	lines.append("Cost: %dCr | Total living: %d (+%.0f per day)" % [price, total_living, repro_per_day])
 	lines.append("Lifespan: %s | Maturity at: %s" % [_format_days(lifespan_days), _format_days(maturity_days)])
 	lines.append("Altitude range: %.1fm - %.1fm (Ideal is %.1fm)" % [min_alt, max_alt, ideal])
-	lines.append("Seed production: %s | Germination chance: %d%%" % [_format_days(seed_cycle_days), int(round(germ_chance * 100.0))])
+	# Seed info removed from UI due to new global reproduction system
 	return "\n".join(lines)
 
 func _compact_info_text_for_plant(plant_name: String) -> String:
@@ -621,11 +664,29 @@ func _compact_info_text_for_plant(plant_name: String) -> String:
 	var min_alt: float = info.get("min_alt", 0.0)
 	var max_alt: float = info.get("max_alt", 0.0)
 
+	# Query manager for totals and reproduction
+	var tm = get_tree().current_scene.find_child("TreeManager", true, false)
+	var total_living := 0
+	var repro_per_day := 0.0
+	if tm:
+		if tm.has_method("get_total_living"):
+			total_living = tm.get_total_living(species)
+		if tm.has_method("get_reproduction"):
+			repro_per_day = tm.get_reproduction(species)
+
 	var lines: Array[String] = []
-	lines.append("%s - %dCr" % [species, price])
+	lines.append("Cost: %dCr | Total living: %d (+%.0f per day)" % [price, total_living, repro_per_day])
 	lines.append("Lifespan: %s" % [_format_days(lifespan_days)])
 	lines.append("Altitude range: %.1fm - %.1fm (Ideal is %.1fm)" % [min_alt, max_alt, ideal])
 	return "\n".join(lines)
+
+func _on_add_reproduction_pressed(species_or_plant: String) -> void:
+	var tm = get_tree().current_scene.find_child("TreeManager", true, false)
+	if tm and tm.has_method("add_reproduction"):
+		tm.add_reproduction(species_or_plant, 1.0)
+		# Refresh the line for immediate feedback
+		_rebuild_species_browser_entries()
+		_rebuild_plants_browser_entries()
 
 func _format_days(days: float) -> String:
 	# Show without trailing .0 for whole numbers
@@ -649,15 +710,15 @@ func _on_plant_spawn_button_pressed(plant_name: String):
 		plants_selection_popup.hide()
 	print("Selected plant: ", plant_name, " - Click on terrain to spawn, right click to cancel")
 
-func _try_inspect_tree_at_mouse_position(mouse_pos: Vector2):
+func _try_inspect_entity_at_mouse_position(mouse_pos: Vector2):
 	if not camera:
 		return
 	var from = camera.project_ray_origin(mouse_pos)
 	var to = from + camera.project_ray_normal(mouse_pos) * 1000.0
 	var space_state = camera.get_world_3d().direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(from, to)
-	# Explicitly target tree collision layer (layer 3)
-	query.collision_mask = 1 << 2
+	# Target tree layer (3) and small plant inspect layer (4)
+	query.collision_mask = (1 << 2) | (1 << 3)
 	query.collide_with_bodies = true
 	query.collide_with_areas = false
 	var result = space_state.intersect_ray(query)
@@ -666,6 +727,10 @@ func _try_inspect_tree_at_mouse_position(mouse_pos: Vector2):
 		var tree_base = _find_tree_base_in_hierarchy(clicked_node)
 		if tree_base:
 			_show_tree_info(tree_base, mouse_pos)
+			return
+		var plant = _find_smallplant_in_hierarchy(clicked_node)
+		if plant:
+			_show_smallplant_info(plant, mouse_pos)
 
 func _find_tree_base_in_hierarchy(node: Node) -> TreeBase:
 	if node is TreeBase:
@@ -674,6 +739,16 @@ func _find_tree_base_in_hierarchy(node: Node) -> TreeBase:
 	while current:
 		if current is TreeBase:
 			return current as TreeBase
+		current = current.get_parent()
+	return null
+
+func _find_smallplant_in_hierarchy(node: Node) -> SmallPlant:
+	if node is SmallPlant:
+		return node as SmallPlant
+	var current = node
+	while current:
+		if current is SmallPlant:
+			return current as SmallPlant
 		current = current.get_parent()
 	return null
 
@@ -693,6 +768,45 @@ func _show_tree_info(tree: TreeBase, mouse_pos: Vector2):
 		popup_pos.y = mouse_pos.y + 20
 	var info_text = _format_tree_info(tree)
 	tree_info_label.text = info_text
+	tree_info_popup.position = popup_pos
+	tree_info_popup.popup()
+	if popup_update_timer:
+		popup_update_timer.start()
+
+func _format_smallplant_info(p: SmallPlant) -> String:
+	var age_text = "%.1f / %.1f days" % [p.current_age, p.max_age]
+	var health_text = "%.1f%%" % (p.healthPercentage * 100.0)
+	var actual_altitude = p.global_position.y
+	var min_altitude = p.min_viable_altitude
+	var ideal_altitude = p.ideal_altitude
+	var max_altitude = p.max_viable_altitude
+	var altitude_color: String
+	if actual_altitude < min_altitude or actual_altitude > max_altitude:
+		altitude_color = "[color=red]"
+	elif abs(actual_altitude - ideal_altitude) <= abs(actual_altitude - min_altitude) and abs(actual_altitude - ideal_altitude) <= abs(actual_altitude - max_altitude):
+		altitude_color = "[color=green]"
+	else:
+		altitude_color = "[color=yellow]"
+	var actual_altitude_text = "%s%.1f m[/color]" % [altitude_color, actual_altitude]
+	var altitude_range_text = "%.1f/%.1f/%.1f m" % [min_altitude, ideal_altitude, max_altitude]
+	var info = "[b]%s[/b]\n\n" % p.species_name
+	info += "[b]Age:[/b] %s\n" % age_text
+	info += "[b]Health:[/b] %s\n" % health_text
+	info += "[b]Current Altitude:[/b] %s\n" % actual_altitude_text
+	info += "[b]Altitude Range (Min/Ideal/Max):[/b] %s" % altitude_range_text
+	return info
+
+func _show_smallplant_info(p: SmallPlant, mouse_pos: Vector2):
+	if not tree_info_popup or not tree_info_label:
+		return
+	currently_inspected_plant = p
+	var popup_pos = mouse_pos + Vector2(20, -tree_info_popup.size.y - 20)
+	var screen_size = get_viewport().get_visible_rect().size
+	if popup_pos.x + tree_info_popup.size.x > screen_size.x:
+		popup_pos.x = screen_size.x - tree_info_popup.size.x - 10
+	if popup_pos.y < 0:
+		popup_pos.y = mouse_pos.y + 20
+	tree_info_label.text = _format_smallplant_info(p)
 	tree_info_popup.position = popup_pos
 	tree_info_popup.popup()
 	if popup_update_timer:
@@ -728,9 +842,12 @@ func _update_popup_info():
 	if currently_inspected_tree and tree_info_label and tree_info_popup and tree_info_popup.visible:
 		var info_text = _format_tree_info(currently_inspected_tree)
 		tree_info_label.text = info_text
+	elif currently_inspected_plant and tree_info_label and tree_info_popup and tree_info_popup.visible:
+		tree_info_label.text = _format_smallplant_info(currently_inspected_plant)
 
 func _on_popup_hide():
 	currently_inspected_tree = null
+	currently_inspected_plant = null
 	if popup_update_timer:
 		popup_update_timer.stop()
 

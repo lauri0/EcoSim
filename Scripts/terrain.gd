@@ -8,6 +8,8 @@ const size := 128.0
 		resolution = new_resolution
 		update_mesh()
 
+@export var randomize_noise_on_start: bool = true
+
 @export var noise: FastNoiseLite:
 	set(new_noise):
 		noise = new_noise
@@ -36,6 +38,10 @@ func get_normal(x: float, y: float) -> Vector3:
 		(get_height(x, y + epsilon) - get_height(x, y - epsilon)) / (2.0 * epsilon)
 	)
 	return normal.normalized()
+
+func get_size() -> float:
+	# Expose terrain size so game logic can validate positions against bounds
+	return size
 
 func update_mesh() -> void:
 	var plane := PlaneMesh.new()
@@ -73,8 +79,13 @@ func _ready():
 	# Set up collision components
 	_setup_collision()
 	
-	# Call update_mesh to initialize everything
+	# Randomize noise and update mesh at game start (runtime only)
 	if not Engine.is_editor_hint():
+		if randomize_noise_on_start and noise:
+			var rng := RandomNumberGenerator.new()
+			rng.randomize()
+			noise.seed = int(rng.randi())
+		# Call update_mesh to initialize everything
 		call_deferred("update_mesh")
 
 func _setup_collision():

@@ -2,29 +2,101 @@ extends Node
 class_name TreeManager
 
 @export var tick_interval: float = 1.0
-@export var seed_tick_interval: float = 0.25
 @export var grid_cell_size: float = 8.0
 @export var max_tree_updates_per_frame: int = 30
-@export var max_seed_updates_per_frame: int = 20
-@export var max_germinations_per_frame: int = 8
 
 var trees: Array = []
-var seeds: Array = []
-var _germination_queue: Array = [] # of {species: String, position: Vector3}
 var _scene_cache: Dictionary = {}
 var _terrain: Node3D
 var _spawn_parent: Node
 
 var _accumulator: float = 0.0
-var _seed_accumulator: float = 0.0
 var _tree_index: int = 0
-var _seed_index: int = 0
 var _tree_quota: int = 0
-var _seed_quota: int = 0
 
 # Spatial index
 var _cell_to_trees: Dictionary = {}
 var _tree_to_cell: Dictionary = {}
+
+# Global reproduction per species (plants and trees). Units: instances per in-game day
+var _reproduction_per_day: Dictionary = {}
+
+# Helper: get nearby plants within range
+func get_plants_within(pos: Vector3, query_range: float) -> Array:
+	var result: Array = []
+	var key = _cell_key(pos)
+	var r_cells = int(ceil(query_range / grid_cell_size))
+	for dx in range(-r_cells, r_cells + 1):
+		for dz in range(-r_cells, r_cells + 1):
+			var nkey = Vector3i(key.x + dx, 0, key.z + dz)
+			var arr = _cell_to_trees.get(nkey, null)
+			if arr == null:
+				continue
+			for t in arr:
+				if is_instance_valid(t):
+					var d2 = (t.global_position - pos).length_squared()
+					if d2 <= query_range * query_range:
+						result.append(t)
+	return result
+
+func can_spawn_plant_at(plant_scene: PackedScene, pos: Vector3) -> bool:
+	# Reject out-of-bounds positions early
+	if not _is_within_terrain_bounds(pos):
+		return false
+	if not plant_scene:
+		return false
+	var inst = plant_scene.instantiate()
+	if not is_instance_valid(inst):
+		return false
+	var ok := true
+	# Only Plants have spacing/neighbor constraints
+	if inst is Plant:
+		var p = inst as Plant
+		# Spacing
+		if not is_space_free(pos, p.needs_free_radius):
+			ok = false
+		# Neighbor constraints
+		var neighbors: Array = []
+		if ok:
+			neighbors = get_plants_within(pos, p.neighbor_range)
+		# Build name set and type flags
+		var name_set: Dictionary = {}
+		var has_tree: bool = false
+		for n in neighbors:
+			if n is LifeForm:
+				name_set[(n as LifeForm).species_name] = true
+			if n is TreeBase:
+				has_tree = true
+		# required neighbors
+		for req in p.required_neighbors:
+			if req == "TreeBase":
+				if not has_tree:
+					ok = false
+					break
+			elif not name_set.has(req):
+				ok = false
+				break
+		# forbidden neighbors
+		if ok:
+			for forb in p.forbidden_neighbors:
+				if forb == "TreeBase" and has_tree:
+					ok = false
+					break
+				elif name_set.has(forb):
+					ok = false
+					break
+	inst.queue_free()
+	return ok
+
+func _terrain_half_size() -> float:
+	if _terrain and _terrain.has_method("get_size"):
+		var s: float = _terrain.get_size()
+		return s * 0.5
+	return 64.0
+
+func _is_within_terrain_bounds(pos: Vector3) -> bool:
+	var half := _terrain_half_size()
+	return abs(pos.x) <= half and abs(pos.z) <= half
 
 func _ready():
 	process_mode = Node.PROCESS_MODE_INHERIT
@@ -92,27 +164,13 @@ func is_space_free(pos: Vector3, radius: float) -> bool:
 						return false
 	return true
 
-func register_seed(seed_node: Node) -> void:
-	if seed_node and not seeds.has(seed_node):
-		seeds.append(seed_node)
-
-func unregister_seed(seed_node: Node) -> void:
-	if seeds.has(seed_node):
-		seeds.erase(seed_node)
-
 func _process(delta: float) -> void:
 	_accumulator += delta
-	_seed_accumulator += delta
 
 	if _accumulator >= tick_interval:
 		var steps: int = int(floor(_accumulator / tick_interval))
 		_accumulator -= steps * tick_interval
 		_tree_quota += steps * trees.size()
-
-	if _seed_accumulator >= seed_tick_interval:
-		var ssteps: int = int(floor(_seed_accumulator / seed_tick_interval))
-		_seed_accumulator -= ssteps * seed_tick_interval
-		_seed_quota += ssteps * seeds.size()
 
 	# Process a limited number of trees this frame (smear work across frames)
 	var trees_processed: int = 0
@@ -131,37 +189,6 @@ func _process(delta: float) -> void:
 		trees_processed += 1
 		_tree_quota -= 1
 
-	# Process a limited number of seeds this frame
-	var seeds_processed: int = 0
-	while _seed_quota > 0 and seeds_processed < max_seed_updates_per_frame and seeds.size() > 0:
-		if _seed_index >= seeds.size():
-			_seed_index = 0
-		var s = seeds[_seed_index]
-		if not is_instance_valid(s):
-			seeds.remove_at(_seed_index)
-			continue
-		if s.has_method("_manager_tick"):
-			s._manager_tick(seed_tick_interval)
-		_seed_index += 1
-		seeds_processed += 1
-		_seed_quota -= 1
-
-	# Process limited number of germinations per frame
-	var germ_processed := 0
-	while germ_processed < max_germinations_per_frame and _germination_queue.size() > 0:
-		var req: Dictionary = _germination_queue.pop_front()
-		if not req:
-			continue
-		var species: String = req.get("species", "")
-		var pos: Vector3 = req.get("position", Vector3.ZERO)
-		var scene := _get_tree_scene(species)
-		if scene:
-			var inst = scene.instantiate()
-			if is_instance_valid(_spawn_parent):
-				_spawn_parent.add_child(inst)
-				inst.global_position = pos
-		germ_processed += 1
-
 func _get_tree_scene(species: String) -> PackedScene:
 	if _scene_cache.has(species):
 		return _scene_cache[species]
@@ -171,5 +198,43 @@ func _get_tree_scene(species: String) -> PackedScene:
 		_scene_cache[species] = packed
 	return packed
 
-func request_germination(species: String, position: Vector3) -> void:
-	_germination_queue.append({"species": species, "position": position})
+func _get_plant_scene(plant_name: String) -> PackedScene:
+	# Cache plants separately by prefixing key
+	var key = "PLANT::" + plant_name
+	if _scene_cache.has(key):
+		return _scene_cache[key]
+	var path = "res://Scenes/SmallPlants/%s.tscn" % plant_name
+	var packed: PackedScene = load(path)
+	if packed:
+		_scene_cache[key] = packed
+	return packed
+
+func request_smallplant_spawn(plant_name: String, pos: Vector3) -> void:
+	var scene = _get_plant_scene(plant_name)
+	if not scene:
+		return
+	if not can_spawn_plant_at(scene, pos):
+		return
+	if is_instance_valid(_spawn_parent):
+		var inst = scene.instantiate()
+		_spawn_parent.add_child(inst)
+		inst.global_position = pos
+
+# ---------- Global reproduction system ----------
+
+func add_reproduction(species: String, amount: float = 1.0) -> void:
+	var current: float = _reproduction_per_day.get(species, 0.0)
+	_reproduction_per_day[species] = current + amount
+
+func get_reproduction(species: String) -> float:
+	return float(_reproduction_per_day.get(species, 0.0))
+
+func get_total_living(species: String) -> int:
+	var count: int = 0
+	for n in trees:
+		if not is_instance_valid(n):
+			continue
+		if n is LifeForm:
+			if (n as LifeForm).species_name == species:
+				count += 1
+	return count

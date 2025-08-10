@@ -83,6 +83,7 @@ cast_shadow = 0
 mesh = SubResource("ArrayMesh_pcaem")
 script = ExtResource("1_vbdgo")
 resolution = 128
+randomize_noise_on_start = null
 noise = SubResource("FastNoiseLite_4qeqg")
 height = 12.0
 

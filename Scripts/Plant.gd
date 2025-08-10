@@ -9,6 +9,11 @@ class_name Plant
 @export var blocking_radius: float = 5.0
 @export var needs_free_radius: float = 6.0
 
+# Neighbor ecology constraints
+@export var required_neighbors: Array[String] = []
+@export var forbidden_neighbors: Array[String] = []
+@export var neighbor_range: float = 5.0
+
 # Shared health update based on altitude
 func _update_health() -> void:
 	var current_altitude: float = global_position.y
