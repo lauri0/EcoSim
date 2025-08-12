@@ -5,6 +5,7 @@ class_name LifeForm
 @export var species_name: String = "Unknown"
 @export var price: int = 10
 @export var max_age: float = 300.0 # in-game days
+@export var repro_radius: float = 8.0
 
 # Common runtime state
 var current_age: float = 0.0
@@ -16,6 +17,22 @@ func _start_dying() -> void:
 
 func _remove_self() -> void:
 	queue_free()
+
+func _enter_tree():
+	# Auto-register with LifeFormReproManager when added to the scene
+	var root = get_tree().current_scene
+	if root:
+		var rm = root.find_child("LifeFormReproManager", true, false)
+		if rm and rm.has_method("register_lifeform"):
+			rm.register_lifeform(self)
+
+func _exit_tree():
+	# Unregister on removal
+	var root = get_tree().current_scene
+	if root:
+		var rm = root.find_child("LifeFormReproManager", true, false)
+		if rm and rm.has_method("unregister_lifeform"):
+			rm.unregister_lifeform(self)
 
 # Time conversion helper: real seconds per in-game day
 func _get_seconds_per_game_day() -> float:

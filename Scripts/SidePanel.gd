@@ -2,6 +2,7 @@ extends Panel
 
 @onready var trees_button: Button = $SideMenuBar/TypeSelectBar/TreesButton
 @onready var plants_button: Button = $SideMenuBar/TypeSelectBar/PlantsButton if has_node("SideMenuBar/TypeSelectBar/PlantsButton") else null
+@onready var mammals_button: Button = $SideMenuBar/TypeSelectBar/MammalsButton if has_node("SideMenuBar/TypeSelectBar/MammalsButton") else null
 # Optional label to show selected species (lives under BottomPanel)
 @onready var selected_label: Label = (
 	get_node("../BottomPanel/BottomMenuBar/SelectedLabel") as Label
@@ -12,6 +13,7 @@ var tree_info_popup: PopupPanel
 var tree_info_label: RichTextLabel
 var currently_inspected_tree: TreeBase
 var currently_inspected_plant: SmallPlant
+var currently_inspected_mammal: Mammal
 var popup_update_timer: Timer
 
 # Tree species selection popup
@@ -25,16 +27,23 @@ var currently_selected_species: String = ""
 var plants_selection_popup: PopupPanel
 var plants_selection_vbox: VBoxContainer
  
- # Cached per-species info to avoid instantiating scenes on every open
+# Mammals species selection popup
+var mammals_selection_popup: PopupPanel
+var mammals_selection_vbox: VBoxContainer
+
+# Cached per-species info to avoid instantiating scenes on every open
 var species_info_cache: Dictionary = {}
 var species_cache_warmed: bool = false
 var plants_info_cache: Dictionary = {}
 var plants_cache_warmed: bool = false
- 
+var mammals_info_cache: Dictionary = {}
+var mammals_cache_warmed: bool = false
+
 
 # A hard‐coded list, or you could load these from your scenes folder
 var species_list = ["Birch","Pine","Rowan"]
 var plants_list = ["Grass", "Lingonberry"]
+var mammals_list = ["EuropeanHare"]
 
 # Tree spawning state
 var selected_tree_species: String = ""
@@ -43,6 +52,10 @@ var is_tree_spawn_mode: bool = false
 # Plant spawning state
 var selected_plant_species: String = ""
 var is_plant_spawn_mode: bool = false
+
+# Mammal spawning state
+var selected_mammal_species: String = ""
+var is_mammal_spawn_mode: bool = false
 
 # References to world objects (set from world scene)
 var camera: Camera3D
@@ -57,6 +70,8 @@ func _ready():
 	trees_button.pressed.connect(_on_trees_button_pressed)
 	if plants_button:
 		plants_button.pressed.connect(_on_plants_button_pressed)
+	if mammals_button:
+		mammals_button.pressed.connect(_on_mammals_button_pressed)
 
 	# World references and UI setup
 	_find_world_references()
@@ -64,9 +79,11 @@ func _ready():
 	_create_tree_info_popup.call_deferred()
 	_create_species_selection_popup.call_deferred()
 	_create_plants_selection_popup.call_deferred()
+	_create_mammals_selection_popup.call_deferred()
 	# Warm the species info cache in the background to make browser instant
 	_warm_species_cache.call_deferred()
 	_warm_plants_cache.call_deferred()
+	_warm_mammals_cache.call_deferred()
 
 func _warm_species_cache():
 	for species_name in species_list:
@@ -79,6 +96,12 @@ func _warm_plants_cache():
 		if not plants_info_cache.has(plant_name):
 			plants_info_cache[plant_name] = _load_smallplant_info(plant_name)
 	plants_cache_warmed = true
+
+func _warm_mammals_cache():
+	for mammal_name in mammals_list:
+		if not mammals_info_cache.has(mammal_name):
+			mammals_info_cache[mammal_name] = _load_mammal_info(mammal_name)
+	mammals_cache_warmed = true
 
 func _load_species_info(species_name: String) -> Dictionary:
 	var tree_scene_path = "res://Scenes/Trees/" + species_name + ".tscn"
@@ -151,6 +174,9 @@ func _on_trees_button_pressed() -> void:
 func _on_plants_button_pressed() -> void:
 	_show_plants_browser()
 
+func _on_mammals_button_pressed() -> void:
+	_show_mammals_browser()
+
 ## Deprecated: selection through PopupMenu removed
 
 
@@ -162,24 +188,23 @@ func _input(event: InputEvent) -> void:
 			_spawn_tree_at_mouse_position(event.position)
 		elif is_plant_spawn_mode and selected_plant_species != "":
 			_spawn_plant_at_mouse_position(event.position)
+		elif is_mammal_spawn_mode and selected_mammal_species != "":
+			_spawn_mammal_at_mouse_position(event.position)
 		else:
 			_try_inspect_entity_at_mouse_position(event.position)
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
-		if _is_mouse_over_ui(event.position):
-			return
-		if is_tree_spawn_mode:
-			_cancel_tree_spawn_mode()
-		elif is_plant_spawn_mode:
-			_cancel_plant_spawn_mode()
-		else:
-			if tree_info_popup and tree_info_popup.visible:
-				tree_info_popup.hide()
-				_on_popup_hide()
-		# no trees_popup anymore
+		# Always clear all selections on right click
+		_clear_all_selections()
+		# Hide any open popups
+		if tree_info_popup and tree_info_popup.visible:
+			tree_info_popup.hide()
+			_on_popup_hide()
 		if species_selection_popup and species_selection_popup.visible:
 			species_selection_popup.hide()
 		if plants_selection_popup and plants_selection_popup.visible:
 			plants_selection_popup.hide()
+		if mammals_selection_popup and mammals_selection_popup.visible:
+			mammals_selection_popup.hide()
 	elif event is InputEventKey and event.pressed and not event.echo:
 		# Performance test: spawn 500 birch trees at random locations when pressing '0'
 		if event.keycode == KEY_0:
@@ -201,6 +226,15 @@ func _spawn_tree_at_mouse_position(mouse_pos: Vector2) -> void:
 	if intersection_point.y <= water_level:
 		print("Cannot spawn tree underwater! (terrain height: ", intersection_point.y, ", water level: ", water_level, ")")
 		return
+	# Reserve spot to avoid rapid double-spawn overlap
+	var tm = get_tree().current_scene.find_child("TreeManager", true, false)
+	if tm:
+		var scene = load("res://Scenes/Trees/" + selected_tree_species + ".tscn")
+		if scene and tm.has_method("reserve_for_scene"):
+			# Allow immediate subsequent spawn into the same spot by tagging reservation to that exact position
+			if not tm.reserve_for_scene(scene, intersection_point, 0.25):
+				print("Spawn spot temporarily reserved; try again")
+				return
 	_spawn_tree(selected_tree_species, intersection_point)
 
 func _spawn_plant_at_mouse_position(mouse_pos: Vector2) -> void:
@@ -219,7 +253,39 @@ func _spawn_plant_at_mouse_position(mouse_pos: Vector2) -> void:
 	if intersection_point.y <= water_level:
 		print("Cannot spawn plant underwater! (terrain height: ", intersection_point.y, ", water level: ", water_level, ")")
 		return
+	var tm2 = get_tree().current_scene.find_child("TreeManager", true, false)
+	if tm2:
+		var scene2 = load("res://Scenes/SmallPlants/" + selected_plant_species + ".tscn")
+		if scene2 and tm2.has_method("reserve_for_scene"):
+			if not tm2.reserve_for_scene(scene2, intersection_point, 0.25):
+				print("Spawn spot temporarily reserved; try again")
+				return
 	_spawn_plant(selected_plant_species, intersection_point)
+
+func _spawn_mammal_at_mouse_position(mouse_pos: Vector2) -> void:
+	if not camera or not terrain:
+		print("Camera or terrain reference not set!")
+		return
+	var from = camera.project_ray_origin(mouse_pos)
+	var ray_dir = camera.project_ray_normal(mouse_pos)
+	if ray_dir.y >= 0:
+		print("Ray pointing upward, can't hit terrain")
+		return
+	var intersection_point = _find_terrain_intersection(from, ray_dir)
+	if intersection_point == Vector3.INF:
+		print("No terrain intersection found")
+		return
+	if intersection_point.y <= water_level:
+		print("Cannot spawn mammal underwater! (terrain height: ", intersection_point.y, ", water level: ", water_level, ")")
+		return
+	var tm = get_tree().current_scene.find_child("TreeManager", true, false)
+	if tm:
+		var scene = load("res://Scenes/Animals/" + selected_mammal_species + ".tscn")
+		if scene and tm.has_method("reserve_for_scene"):
+			if not tm.reserve_for_scene(scene, intersection_point, 0.25):
+				print("Spawn spot temporarily reserved; try again")
+				return
+	_spawn_mammal(selected_mammal_species, intersection_point)
 
 func _find_terrain_intersection(ray_origin: Vector3, ray_direction: Vector3) -> Vector3:
 	var terrain_size = 256.0
@@ -262,10 +328,10 @@ func _spawn_tree(species: String, spawn_position: Vector3) -> void:
 			if not tm.can_spawn_plant_at(tree_scene, spawn_position):
 				return
 		var tree_instance = tree_scene.instantiate()
-		# Charge credits before adding to scene
+		# Charge dynamic spawn cost before adding to scene
 		var price: int = 0
 		if tree_instance is LifeForm:
-			price = (tree_instance as LifeForm).price
+			price = _compute_dynamic_spawn_cost(tree_instance as LifeForm)
 		if top_right_panel and top_right_panel.has_method("try_spend"):
 			if not top_right_panel.try_spend(price):
 				print("Not enough credits to spawn ", species, " (cost: ", price, ")")
@@ -293,10 +359,10 @@ func _spawn_plant(plant: String, spawn_position: Vector3) -> void:
 			if not tm.can_spawn_plant_at(plant_scene, spawn_position):
 				return
 		var plant_instance = plant_scene.instantiate()
-		# Charge credits before adding to scene
+		# Charge dynamic spawn cost before adding to scene
 		var price: int = 0
 		if plant_instance is LifeForm:
-			price = (plant_instance as LifeForm).price
+			price = _compute_dynamic_spawn_cost(plant_instance as LifeForm)
 		if top_right_panel and top_right_panel.has_method("try_spend"):
 			if not top_right_panel.try_spend(price):
 				print("Not enough credits to spawn ", plant, " (cost: ", price, ")")
@@ -313,6 +379,36 @@ func _spawn_plant(plant: String, spawn_position: Vector3) -> void:
 		print("Spawned ", plant, " plant at position: ", spawn_position)
 	else:
 		print("Failed to load plant scene: ", plant_scene_path)
+
+func _spawn_mammal(species: String, spawn_position: Vector3) -> void:
+	var scene_path = "res://Scenes/Animals/" + species + ".tscn"
+	var scene = load(scene_path)
+	if scene:
+		# Use plant spacing validation and reservations re-used from manager
+		var tm = get_tree().current_scene.find_child("TreeManager", true, false)
+		if tm and tm.has_method("can_spawn_plant_at"):
+			if not tm.can_spawn_plant_at(scene, spawn_position):
+				return
+		var inst = scene.instantiate()
+		# Charge dynamic spawn cost
+		var price: int = 0
+		if inst is LifeForm:
+			price = _compute_dynamic_spawn_cost(inst as LifeForm)
+		if top_right_panel and top_right_panel.has_method("try_spend"):
+			if not top_right_panel.try_spend(price):
+				print("Not enough credits to spawn ", species, " (cost: ", price, ")")
+				if inst:
+					inst.queue_free()
+				return
+		terrain.get_parent().add_child(inst)
+		var terrain_height = terrain.get_height(spawn_position.x, spawn_position.z)
+		spawn_position.y = terrain_height
+		inst.global_position = spawn_position
+		var random_y_rotation = randf() * TAU
+		inst.rotation.y = random_y_rotation
+		print("Spawned ", species, " at position: ", spawn_position)
+	else:
+		print("Failed to load mammal scene: ", scene_path)
 
 func _spawn_tree_no_cost(species: String, spawn_position: Vector3) -> void:
 	var tree_scene_path = "res://Scenes/Trees/" + species + ".tscn"
@@ -359,12 +455,23 @@ func _cancel_plant_spawn_mode():
 	_update_selected_display()
 	print("Plant spawning cancelled")
 
+func _clear_all_selections():
+	is_tree_spawn_mode = false
+	selected_tree_species = ""
+	is_plant_spawn_mode = false
+	selected_plant_species = ""
+	is_mammal_spawn_mode = false
+	selected_mammal_species = ""
+	_update_selected_display()
+
 func _update_selected_display():
 	if selected_label:
 		if selected_tree_species != "":
 			selected_label.text = "Selected: " + selected_tree_species
 		elif selected_plant_species != "":
 			selected_label.text = "Selected: " + selected_plant_species
+		elif selected_mammal_species != "":
+			selected_label.text = "Selected: " + selected_mammal_species
 		else:
 			selected_label.text = ""
 
@@ -431,6 +538,7 @@ func _create_species_selection_popup():
 	# Initial build
 	_rebuild_species_browser_entries()
 
+
 func _create_plants_selection_popup():
 	plants_selection_popup = PopupPanel.new()
 	plants_selection_popup.size = Vector2(560, 740)
@@ -466,6 +574,41 @@ func _create_plants_selection_popup():
 
 	_rebuild_plants_browser_entries()
 
+func _create_mammals_selection_popup():
+	mammals_selection_popup = PopupPanel.new()
+	mammals_selection_popup.size = Vector2(560, 740)
+	mammals_selection_popup.set_flag(Window.FLAG_RESIZE_DISABLED, true)
+
+	var root_vbox = VBoxContainer.new()
+	root_vbox.size = Vector2(540, 720)
+	root_vbox.position = Vector2(10, 10)
+	mammals_selection_popup.add_child(root_vbox)
+
+	var title_label = Label.new()
+	title_label.text = "Mammals"
+	title_label.add_theme_font_size_override("font_size", 18)
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root_vbox.add_child(title_label)
+
+	var scroll = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(540, 680)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	root_vbox.add_child(scroll)
+
+	var list_vbox = VBoxContainer.new()
+	list_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list_vbox)
+
+	mammals_selection_vbox = list_vbox
+
+	var ui_root = get_parent()
+	if ui_root:
+		ui_root.add_child(mammals_selection_popup)
+	else:
+		get_tree().current_scene.add_child(mammals_selection_popup)
+
+	_rebuild_mammals_browser_entries()
+
 ## Detailed formatter kept for future but not used by browser
 
 func _format_species_info_compact(species_name: String) -> String:
@@ -497,6 +640,8 @@ func _show_species_browser():
 	var screen_size = get_viewport().get_visible_rect().size
 	if popup_pos.x + species_selection_popup.size.x > screen_size.x:
 		popup_pos.x = max(0.0, btn_rect.position.x - species_selection_popup.size.x - 8)
+	# Rebuild values when opened
+	_rebuild_species_browser_entries()
 	species_selection_popup.position = popup_pos
 	species_selection_popup.popup()
 
@@ -508,8 +653,22 @@ func _show_plants_browser():
 	var screen_size = get_viewport().get_visible_rect().size
 	if popup_pos.x + plants_selection_popup.size.x > screen_size.x:
 		popup_pos.x = max(0.0, btn_rect.position.x - plants_selection_popup.size.x - 8)
+	# Rebuild values when opened
+	_rebuild_plants_browser_entries()
 	plants_selection_popup.position = popup_pos
 	plants_selection_popup.popup()
+
+func _show_mammals_browser():
+	if not mammals_selection_popup:
+		return
+	var btn_rect = mammals_button.get_global_rect() if mammals_button else trees_button.get_global_rect()
+	var popup_pos = Vector2(btn_rect.position.x + btn_rect.size.x + 8, btn_rect.position.y)
+	var screen_size = get_viewport().get_visible_rect().size
+	if popup_pos.x + mammals_selection_popup.size.x > screen_size.x:
+		popup_pos.x = max(0.0, btn_rect.position.x - mammals_selection_popup.size.x - 8)
+	_rebuild_mammals_browser_entries()
+	mammals_selection_popup.position = popup_pos
+	mammals_selection_popup.popup()
 
 func _rebuild_species_browser_entries():
 	if not species_selection_vbox:
@@ -568,6 +727,68 @@ func _rebuild_species_browser_entries():
 		sep.modulate = Color(1,1,1,0.25)
 		species_selection_vbox.add_child(sep)
 
+func _compact_info_text_for_mammal(mammal_name: String) -> String:
+	if not mammals_info_cache.has(mammal_name):
+		mammals_info_cache[mammal_name] = _load_mammal_info(mammal_name)
+	var info: Dictionary = mammals_info_cache[mammal_name]
+	var species: String = info.get("name", mammal_name)
+	var price: int = info.get("price", 0)
+	var lifespan_days: float = info.get("lifespan_days", 0.0)
+	var walk_speed: float = info.get("walk_speed", 0.0)
+	var sleep: float = info.get("sleep", 0.0)
+	var wake: float = info.get("wake", 0.0)
+	var vision: float = info.get("vision", 0.0)
+	var diet: Array = info.get("diet", [])
+
+	var tm = get_tree().current_scene.find_child("TreeManager", true, false)
+	var total_living := 0
+	var repro_per_day := 0.0
+	var eating_target := 1
+	if tm:
+		if tm.has_method("get_total_living"):
+			total_living = tm.get_total_living(species)
+		if tm.has_method("get_reproduction"):
+			repro_per_day = tm.get_reproduction(species)
+		if tm.has_method("get_eating_target"):
+			eating_target = tm.get_eating_target(species)
+	var spawn_cost: int = price * (total_living + 1)
+	var lines: Array[String] = []
+	lines.append("Cost: %dCr | Total living: %d (+%.0f/day | eat x%d/day)" % [spawn_cost, total_living, repro_per_day, eating_target])
+	lines.append("Lifespan: %s | Walk speed: %.1f m/s" % [_format_days(lifespan_days), walk_speed])
+	lines.append("Daily cycle: sleeps at %.0f:00, wakes at %.0f:00 | Vision: %.0fm" % [sleep, wake, vision])
+	lines.append("Diet: " + ", ".join(diet))
+	return "\n".join(lines)
+
+func _load_mammal_info(mammal_name: String) -> Dictionary:
+	var path = "res://Scenes/Animals/" + mammal_name + ".tscn"
+	var scene: PackedScene = load(path)
+	if not scene:
+		return {"name": mammal_name, "price": 0, "lifespan_days": 0.0, "walk_speed": 0.0, "sleep": 0.0, "wake": 0.0, "vision": 0.0, "diet": []}
+	var inst = scene.instantiate()
+	var info := {"name": mammal_name, "price": 0, "lifespan_days": 0.0, "walk_speed": 0.0, "sleep": 0.0, "wake": 0.0, "vision": 0.0, "diet": []}
+	if inst and inst is LifeForm:
+		info["price"] = (inst as LifeForm).price
+		info["lifespan_days"] = (inst as LifeForm).max_age
+	if inst and inst.has_method("get"):
+		var ws = inst.get("walk_speed")
+		if typeof(ws) == TYPE_FLOAT or typeof(ws) == TYPE_INT:
+			info["walk_speed"] = float(ws)
+		var st = inst.get("sleep_time")
+		if typeof(st) == TYPE_FLOAT or typeof(st) == TYPE_INT:
+			info["sleep"] = float(st)
+		var wh = inst.get("wake_hour")
+		if typeof(wh) == TYPE_FLOAT or typeof(wh) == TYPE_INT:
+			info["wake"] = float(wh)
+		var vr = inst.get("vision_range")
+		if typeof(vr) == TYPE_FLOAT or typeof(vr) == TYPE_INT:
+			info["vision"] = float(vr)
+		var d = inst.get("diet")
+		if typeof(d) == TYPE_ARRAY:
+			info["diet"] = d
+	if inst:
+		inst.queue_free()
+	return info
+
 func _rebuild_plants_browser_entries():
 	if not plants_selection_vbox:
 		return
@@ -621,6 +842,65 @@ func _rebuild_plants_browser_entries():
 		sep.modulate = Color(1,1,1,0.25)
 		plants_selection_vbox.add_child(sep)
 
+func _rebuild_mammals_browser_entries():
+	if not mammals_selection_vbox:
+		return
+	for child in mammals_selection_vbox.get_children():
+		mammals_selection_vbox.remove_child(child)
+		child.queue_free()
+	for mammal_name in mammals_list:
+		var row = HBoxContainer.new()
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.custom_minimum_size = Vector2(520, 54)
+		row.add_theme_constant_override("separation", 12)
+
+		var texts_box = VBoxContainer.new()
+		texts_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		texts_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+
+		var name_label = Label.new()
+		name_label.text = mammal_name
+		name_label.add_theme_font_size_override("font_size", 16)
+		texts_box.add_child(name_label)
+
+		var info_label = Label.new()
+		info_label.text = _compact_info_text_for_mammal(mammal_name)
+		info_label.add_theme_font_size_override("font_size", 12)
+		info_label.modulate = Color(0.9, 0.9, 0.9)
+		texts_box.add_child(info_label)
+
+		row.add_child(texts_box)
+
+		var buttons_box = VBoxContainer.new()
+		buttons_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var spawn_button = Button.new()
+		spawn_button.text = "Spawn"
+		spawn_button.custom_minimum_size = Vector2(110, 26)
+		spawn_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		spawn_button.pressed.connect(_on_mammal_spawn_button_pressed.bind(mammal_name))
+		buttons_box.add_child(spawn_button)
+
+		var repro_button = Button.new()
+		repro_button.text = "+1 Reproduction"
+		repro_button.custom_minimum_size = Vector2(110, 24)
+		repro_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		repro_button.pressed.connect(_on_add_reproduction_pressed.bind(mammal_name))
+		buttons_box.add_child(repro_button)
+
+		var eating_button = Button.new()
+		eating_button.text = "+1 Eating"
+		eating_button.custom_minimum_size = Vector2(110, 24)
+		eating_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		eating_button.pressed.connect(_on_add_eating_pressed.bind(mammal_name))
+		buttons_box.add_child(eating_button)
+
+		row.add_child(buttons_box)
+
+		mammals_selection_vbox.add_child(row)
+		var sep = HSeparator.new()
+		sep.modulate = Color(1,1,1,0.25)
+		mammals_selection_vbox.add_child(sep)
+
 func _compact_info_text(species_name: String) -> String:
 	if not species_info_cache.has(species_name):
 		# Load on-demand if cache not ready
@@ -645,10 +925,28 @@ func _compact_info_text(species_name: String) -> String:
 			total_living = tm.get_total_living(species)
 		if tm.has_method("get_reproduction"):
 			repro_per_day = tm.get_reproduction(species)
+		# Reserve a position briefly when user selects Spawn to avoid double-spawn overlaps
 
+	var spawn_cost: int = price * (total_living + 1)
 	var lines: Array[String] = []
-	lines.append("Cost: %dCr | Total living: %d (+%.0f per day)" % [price, total_living, repro_per_day])
+	lines.append("Cost: %dCr | Total living: %d (+%.0f per day)" % [spawn_cost, total_living, repro_per_day])
 	lines.append("Lifespan: %s | Maturity at: %s" % [_format_days(lifespan_days), _format_days(maturity_days)])
+	# Reproduction parameters (shared via Plant)
+	var repro_radius := 0.0
+	var repro_interval_days := 0.0
+	var tree_scene_path = "res://Scenes/Trees/" + species_name + ".tscn"
+	var tree_scene: PackedScene = load(tree_scene_path)
+	if tree_scene:
+		var inst = tree_scene.instantiate()
+		if inst and inst.has_method("get"):
+			var rr = inst.get("repro_radius")
+			if typeof(rr) == TYPE_FLOAT or typeof(rr) == TYPE_INT:
+				repro_radius = float(rr)
+			var ri = inst.get("repro_interval_days")
+			if typeof(ri) == TYPE_FLOAT or typeof(ri) == TYPE_INT:
+				repro_interval_days = float(ri)
+		inst.queue_free()
+	lines.append("Reproduction: radius %.1fm | interval %s" % [repro_radius, _format_days(repro_interval_days)])
 	lines.append("Altitude range: %.1fm - %.1fm (Ideal is %.1fm)" % [min_alt, max_alt, ideal])
 	# Seed info removed from UI due to new global reproduction system
 	return "\n".join(lines)
@@ -674,19 +972,66 @@ func _compact_info_text_for_plant(plant_name: String) -> String:
 		if tm.has_method("get_reproduction"):
 			repro_per_day = tm.get_reproduction(species)
 
+	var spawn_cost: int = price * (total_living + 1)
 	var lines: Array[String] = []
-	lines.append("Cost: %dCr | Total living: %d (+%.0f per day)" % [price, total_living, repro_per_day])
+	lines.append("Cost: %dCr | Total living: %d (+%.0f per day)" % [spawn_cost, total_living, repro_per_day])
 	lines.append("Lifespan: %s" % [_format_days(lifespan_days)])
+	# Reproduction parameters for plants
+	var repro_radius := 0.0
+	var repro_interval_days := 0.0
+	var plant_scene_path = "res://Scenes/SmallPlants/" + plant_name + ".tscn"
+	var plant_scene: PackedScene = load(plant_scene_path)
+	if plant_scene:
+		var inst = plant_scene.instantiate()
+		if inst and inst.has_method("get"):
+			var rr = inst.get("repro_radius")
+			if typeof(rr) == TYPE_FLOAT or typeof(rr) == TYPE_INT:
+				repro_radius = float(rr)
+			var ri = inst.get("repro_interval_days")
+			if typeof(ri) == TYPE_FLOAT or typeof(ri) == TYPE_INT:
+				repro_interval_days = float(ri)
+		inst.queue_free()
+	lines.append("Reproduction: radius %.1fm | interval %s" % [repro_radius, _format_days(repro_interval_days)])
 	lines.append("Altitude range: %.1fm - %.1fm (Ideal is %.1fm)" % [min_alt, max_alt, ideal])
 	return "\n".join(lines)
 
 func _on_add_reproduction_pressed(species_or_plant: String) -> void:
 	var tm = get_tree().current_scene.find_child("TreeManager", true, false)
-	if tm and tm.has_method("add_reproduction"):
+	if not tm:
+		return
+	var base_price: int = _get_base_price_for(species_or_plant)
+	var current_repro: float = 0.0
+	if tm.has_method("get_reproduction"):
+		current_repro = tm.get_reproduction(species_or_plant)
+	var repro_cost: int = int(5.0 * float(base_price) * (current_repro + 1.0))
+	if top_right_panel and top_right_panel.has_method("try_spend"):
+		if not top_right_panel.try_spend(repro_cost):
+			print("Not enough credits to increase reproduction for ", species_or_plant, " (cost: ", repro_cost, ")")
+			return
+	if tm.has_method("add_reproduction"):
 		tm.add_reproduction(species_or_plant, 1.0)
-		# Refresh the line for immediate feedback
-		_rebuild_species_browser_entries()
-		_rebuild_plants_browser_entries()
+	# Refresh the lines for immediate feedback
+	_rebuild_species_browser_entries()
+	_rebuild_plants_browser_entries()
+
+func _on_add_eating_pressed(mammal_species: String) -> void:
+	var tm = get_tree().current_scene.find_child("TreeManager", true, false)
+	if not tm:
+		return
+	var base_price: int = _get_base_price_for(mammal_species)
+	# Eating upgrade cost: 2x base price * (current_target + 1)
+	var current_target: int = 1
+	if tm.has_method("get_eating_target"):
+		current_target = tm.get_eating_target(mammal_species)
+	var upgrade_cost: int = int(2.0 * float(base_price) * float(current_target + 1))
+	if top_right_panel and top_right_panel.has_method("try_spend"):
+		if not top_right_panel.try_spend(upgrade_cost):
+			print("Not enough credits to increase eating target for ", mammal_species, " (cost: ", upgrade_cost, ")")
+			return
+	if tm.has_method("add_eating_target"):
+		tm.add_eating_target(mammal_species, 1)
+	# Refresh mammals UI for immediate feedback
+	_rebuild_mammals_browser_entries()
 
 func _format_days(days: float) -> String:
 	# Show without trailing .0 for whole numbers
@@ -695,20 +1040,76 @@ func _format_days(days: float) -> String:
 	return "%.1f days" % days
 
 func _on_spawn_button_pressed(species_name: String):
+	# Clear any previous selections across both trees and plants
+	_clear_all_selections()
 	selected_tree_species = species_name
 	is_tree_spawn_mode = true
 	_update_selected_display()
 	if species_selection_popup and species_selection_popup.visible:
 		species_selection_popup.hide()
+	if plants_selection_popup and plants_selection_popup.visible:
+		plants_selection_popup.hide()
 	print("Selected tree species: ", species_name, " - Click on terrain to spawn, right click to cancel")
 
 func _on_plant_spawn_button_pressed(plant_name: String):
+	# Clear any previous selections across both trees and plants
+	_clear_all_selections()
 	selected_plant_species = plant_name
 	is_plant_spawn_mode = true
 	_update_selected_display()
 	if plants_selection_popup and plants_selection_popup.visible:
 		plants_selection_popup.hide()
-	print("Selected plant: ", plant_name, " - Click on terrain to spawn, right click to cancel")
+	if species_selection_popup and species_selection_popup.visible:
+		species_selection_popup.hide()
+
+func _on_mammal_spawn_button_pressed(mammal_name: String):
+	# Clear any previous selections across all types
+	_clear_all_selections()
+	selected_mammal_species = mammal_name
+	is_mammal_spawn_mode = true
+	_update_selected_display()
+	if mammals_selection_popup and mammals_selection_popup.visible:
+		mammals_selection_popup.hide()
+	if species_selection_popup and species_selection_popup.visible:
+		species_selection_popup.hide()
+	if plants_selection_popup and plants_selection_popup.visible:
+		plants_selection_popup.hide()
+
+func _compute_dynamic_spawn_cost(lf: LifeForm) -> int:
+	var base_price: int = lf.price
+	var tm = get_tree().current_scene.find_child("TreeManager", true, false)
+	var count: int = 0
+	if tm and tm.has_method("get_total_living"):
+		count = tm.get_total_living(lf.species_name)
+	return base_price * (count + 1)
+
+func _get_base_price_for(species_or_plant_name: String) -> int:
+	# Try caches first
+	if species_info_cache.has(species_or_plant_name):
+		var info: Dictionary = species_info_cache[species_or_plant_name]
+		return int(info.get("price", 0))
+	if plants_info_cache.has(species_or_plant_name):
+		var pinfo: Dictionary = plants_info_cache[species_or_plant_name]
+		return int(pinfo.get("price", 0))
+	# Fallback: load scene and read LifeForm.price
+	var scene: PackedScene = null
+	var path_tree = "res://Scenes/Trees/" + species_or_plant_name + ".tscn"
+	scene = load(path_tree)
+	if not scene:
+		var path_plant = "res://Scenes/SmallPlants/" + species_or_plant_name + ".tscn"
+		scene = load(path_plant)
+	if not scene:
+		var path_mammal = "res://Scenes/Animals/" + species_or_plant_name + ".tscn"
+		scene = load(path_mammal)
+	if scene:
+		var inst = scene.instantiate()
+		if inst is LifeForm:
+			var price_val: int = (inst as LifeForm).price
+			inst.queue_free()
+			return price_val
+		if inst:
+			inst.queue_free()
+	return 0
 
 func _try_inspect_entity_at_mouse_position(mouse_pos: Vector2):
 	if not camera:
@@ -717,7 +1118,7 @@ func _try_inspect_entity_at_mouse_position(mouse_pos: Vector2):
 	var to = from + camera.project_ray_normal(mouse_pos) * 1000.0
 	var space_state = camera.get_world_3d().direct_space_state
 	var query = PhysicsRayQueryParameters3D.create(from, to)
-	# Target tree layer (3) and small plant inspect layer (4)
+	# Target tree layer (3) and small plant/mammal inspect layer (4)
 	query.collision_mask = (1 << 2) | (1 << 3)
 	query.collide_with_bodies = true
 	query.collide_with_areas = false
@@ -731,6 +1132,10 @@ func _try_inspect_entity_at_mouse_position(mouse_pos: Vector2):
 		var plant = _find_smallplant_in_hierarchy(clicked_node)
 		if plant:
 			_show_smallplant_info(plant, mouse_pos)
+			return
+		var mammal = _find_mammal_in_hierarchy(clicked_node)
+		if mammal:
+			_show_mammal_info(mammal, mouse_pos)
 
 func _find_tree_base_in_hierarchy(node: Node) -> TreeBase:
 	if node is TreeBase:
@@ -751,6 +1156,49 @@ func _find_smallplant_in_hierarchy(node: Node) -> SmallPlant:
 			return current as SmallPlant
 		current = current.get_parent()
 	return null
+
+func _find_mammal_in_hierarchy(node: Node) -> Mammal:
+	if node is Mammal:
+		return node as Mammal
+	var current = node
+	while current:
+		if current is Mammal:
+			return current as Mammal
+		current = current.get_parent()
+	return null
+
+func _format_mammal_info(m: Mammal) -> String:
+	var age_text = "%.1f / %.1f days" % [m.current_age, m.max_age]
+	var health_text = "%.1f%%" % (m.healthPercentage * 100.0)
+	var info = "[b]%s[/b]\n\n" % m.species_name
+	info += "[b]Age:[/b] %s\n" % age_text
+	info += "[b]Health:[/b] %s\n" % health_text
+	var mstate := "?"
+	if m.has_method("get_mammal_state_name"):
+		mstate = m.get_mammal_state_name()
+	var fstate := "?"
+	if m.has_method("get_forage_state_name"):
+		fstate = m.get_forage_state_name()
+	info += "[b]State:[/b] %s | [b]Forage:[/b] %s\n" % [mstate, fstate]
+	info += "[b]Walk Speed:[/b] %.1f m/s | [b]Vision:[/b] %.1f m\n" % [m.walk_speed, m.vision_range]
+	info += "[b]Diet:[/b] " + ", ".join(m.get_preferred_diet())
+	return info
+
+func _show_mammal_info(m: Mammal, mouse_pos: Vector2):
+	if not tree_info_popup or not tree_info_label:
+		return
+	currently_inspected_mammal = m
+	var popup_pos = mouse_pos + Vector2(20, -tree_info_popup.size.y - 20)
+	var screen_size = get_viewport().get_visible_rect().size
+	if popup_pos.x + tree_info_popup.size.x > screen_size.x:
+		popup_pos.x = screen_size.x - tree_info_popup.size.x - 10
+	if popup_pos.y < 0:
+		popup_pos.y = mouse_pos.y + 20
+	tree_info_label.text = _format_mammal_info(m)
+	tree_info_popup.position = popup_pos
+	tree_info_popup.popup()
+	if popup_update_timer:
+		popup_update_timer.start()
 
 func _show_tree_info(tree: TreeBase, mouse_pos: Vector2):
 	if not tree_info_popup or not tree_info_label:
@@ -844,10 +1292,13 @@ func _update_popup_info():
 		tree_info_label.text = info_text
 	elif currently_inspected_plant and tree_info_label and tree_info_popup and tree_info_popup.visible:
 		tree_info_label.text = _format_smallplant_info(currently_inspected_plant)
+	elif currently_inspected_mammal and tree_info_label and tree_info_popup and tree_info_popup.visible:
+		tree_info_label.text = _format_mammal_info(currently_inspected_mammal)
 
 func _on_popup_hide():
 	currently_inspected_tree = null
 	currently_inspected_plant = null
+	currently_inspected_mammal = null
 	if popup_update_timer:
 		popup_update_timer.stop()
 

@@ -1,4 +1,4 @@
-extends "res://Scripts/Plant.gd"
+extends Plant
 class_name SmallPlant
 
 # Small plants are simple lifeforms that do not grow in stages.
@@ -6,9 +6,6 @@ class_name SmallPlant
 
 var seconds_per_game_day: float = 90.0
 var plant_manager: Node
-@export var repro_radius: float = 4.0
-@export var repro_interval_days: float = 0.5
-var _repro_timer: float = 0.0
 var collision_body: StaticBody3D
 var is_winter: bool = false
 
@@ -55,35 +52,19 @@ func _logic_update(dt: float) -> void:
 	# Update health from environment
 	_update_health()
 
-	# Reproduction timer scales with health: healthier plants reproduce faster
-	# At 0 health, progress is paused; at 100% health, full speed
-	if not is_winter:
-		_repro_timer += (dt / seconds_per_game_day) * clamp(healthPercentage, 0.0, 1.0)
-	if _repro_timer >= repro_interval_days:
-		_repro_timer = 0.0
-		_try_reproduce()
+	# Unified reproduction tick (implemented in Plant)
+	_tick_reproduction(dt, seconds_per_game_day, is_winter)
 
 func _remove_self() -> void:
 	queue_free()
 
+# Called when an animal consumes this plant
+func consume() -> void:
+	_remove_self()
+
 func _try_reproduce() -> void:
-	# Only reproduce if reasonably healthy
-	if is_winter or healthPercentage < 0.5:
-		return
-	# Choose a random nearby point on terrain and request spawn via manager (budgeted)
-	var root = get_tree().current_scene
-	var terrain = root.find_child("Terrain", true, false)
-	if not terrain or not terrain.has_method("get_height"):
-		return
-	var angle = randf() * TAU
-	var dist = randf_range(repro_radius * 0.25, repro_radius)
-	var offset = Vector3(cos(angle) * dist, 0.0, sin(angle) * dist)
-	var pos = global_position + offset
-	var y = terrain.get_height(pos.x, pos.z)
-	var spawn_pos = Vector3(pos.x, y, pos.z)
-	var tm = root.find_child("TreeManager", true, false)
-	if tm and tm.has_method("request_smallplant_spawn"):
-		tm.request_smallplant_spawn(species_name, spawn_pos)
+	# Use Plant default and then refresh the berry for bushes
+	super._try_reproduce()
 
 # ---------- Seasonal helpers ----------
 func _setup_model_refs() -> void:

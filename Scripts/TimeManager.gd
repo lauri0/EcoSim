@@ -157,6 +157,9 @@ func get_current_hour() -> float:
 func get_current_year() -> int:
 	return current_year
 
+func get_current_day() -> int:
+	return current_day
+
 func get_formatted_time() -> String:
 	var hour_int = int(current_hour)
 	var season = season_names[current_day]

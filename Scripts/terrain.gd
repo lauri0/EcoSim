@@ -94,6 +94,7 @@ func _setup_collision():
 	static_body.name = "TerrainCollision"
 	
 	# Set terrain collision layer (layer 2)
+	static_body.set_collision_layer_value(1, false)
 	static_body.set_collision_layer_value(2, true)
 	static_body.set_collision_mask_value(1, false)
 	

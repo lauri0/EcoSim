@@ -21,6 +21,12 @@ var _tree_to_cell: Dictionary = {}
 # Global reproduction per species (plants and trees). Units: instances per in-game day
 var _reproduction_per_day: Dictionary = {}
 
+# Animals: target times eaten per day per species (UI/browser species key)
+var _eating_target_per_day: Dictionary = {}
+
+# Temporary spawn reservations to avoid rapid double-spawns overlapping
+var _reservations: Array = [] # of { pos: Vector3, radius: float, ttl: float }
+
 # Helper: get nearby plants within range
 func get_plants_within(pos: Vector3, query_range: float) -> Array:
 	var result: Array = []
@@ -49,42 +55,59 @@ func can_spawn_plant_at(plant_scene: PackedScene, pos: Vector3) -> bool:
 	if not is_instance_valid(inst):
 		return false
 	var ok := true
-	# Only Plants have spacing/neighbor constraints
-	if inst is Plant:
-		var p = inst as Plant
-		# Spacing
-		if not is_space_free(pos, p.needs_free_radius):
-			ok = false
-		# Neighbor constraints
-		var neighbors: Array = []
-		if ok:
-			neighbors = get_plants_within(pos, p.neighbor_range)
-		# Build name set and type flags
-		var name_set: Dictionary = {}
-		var has_tree: bool = false
-		for n in neighbors:
-			if n is LifeForm:
-				name_set[(n as LifeForm).species_name] = true
-			if n is TreeBase:
-				has_tree = true
-		# required neighbors
-		for req in p.required_neighbors:
-			if req == "TreeBase":
-				if not has_tree:
-					ok = false
-					break
-			elif not name_set.has(req):
+	# Plants define spacing/neighbor constraints via exported properties
+	var needs_free_radius: float = 0.0
+	var has_nfr: bool = false
+	if inst and inst.has_method("get"):
+		var v = inst.get("needs_free_radius")
+		if typeof(v) == TYPE_FLOAT or typeof(v) == TYPE_INT:
+			needs_free_radius = float(v)
+			has_nfr = true
+	if has_nfr and not is_space_free(pos, needs_free_radius):
+		ok = false
+	# Neighbor constraints
+	var neighbor_range: float = 0.0
+	var required_neighbors: Array = []
+	var forbidden_neighbors: Array = []
+	if inst and inst.has_method("get"):
+		var nr = inst.get("neighbor_range")
+		if typeof(nr) == TYPE_FLOAT or typeof(nr) == TYPE_INT:
+			neighbor_range = float(nr)
+		var reqn = inst.get("required_neighbors")
+		if typeof(reqn) == TYPE_ARRAY:
+			required_neighbors = reqn
+		var forn = inst.get("forbidden_neighbors")
+		if typeof(forn) == TYPE_ARRAY:
+			forbidden_neighbors = forn
+	var neighbors: Array = []
+	if ok and neighbor_range > 0.0:
+		neighbors = get_plants_within(pos, neighbor_range)
+	# Build name set and type flags (tree detection via method unique to trees)
+	var name_set: Dictionary = {}
+	var has_tree: bool = false
+	for n in neighbors:
+		if n is LifeForm:
+			name_set[(n as LifeForm).species_name] = true
+		if n and n.has_method("get_state_name"):
+			has_tree = true
+	# required neighbors
+	for req in required_neighbors:
+		if req == "TreeBase":
+			if not has_tree:
 				ok = false
 				break
-		# forbidden neighbors
-		if ok:
-			for forb in p.forbidden_neighbors:
-				if forb == "TreeBase" and has_tree:
-					ok = false
-					break
-				elif name_set.has(forb):
-					ok = false
-					break
+		elif not name_set.has(req):
+			ok = false
+			break
+	# forbidden neighbors
+	if ok:
+		for forb in forbidden_neighbors:
+			if forb == "TreeBase" and has_tree:
+				ok = false
+				break
+			elif name_set.has(forb):
+				ok = false
+				break
 	inst.queue_free()
 	return ok
 
@@ -162,6 +185,17 @@ func is_space_free(pos: Vector3, radius: float) -> bool:
 					var d2 = (t.global_position - pos).length_squared()
 					if d2 < radius * radius:
 						return false
+	# Also honor temporary reservations (sum of radii)
+	for res in _reservations:
+		var rpos: Vector3 = res.get("pos", Vector3.ZERO)
+		var rrad: float = float(res.get("radius", 0.0))
+		var d2 = (rpos - pos).length_squared()
+		# Allow the spawn that created the reservation at this exact position to proceed
+		if d2 <= 0.0001:
+			continue
+		var sumr = radius + rrad
+		if d2 < sumr * sumr:
+			return false
 	return true
 
 func _process(delta: float) -> void:
@@ -188,6 +222,15 @@ func _process(delta: float) -> void:
 		_tree_index += 1
 		trees_processed += 1
 		_tree_quota -= 1
+
+	# Age out reservations
+	if _reservations.size() > 0:
+		for res in _reservations:
+			res["ttl"] = float(res.get("ttl", 0.0)) - delta
+		# remove expired
+		for i in range(_reservations.size() - 1, -1, -1):
+			if float(_reservations[i].get("ttl", 0.0)) <= 0.0:
+				_reservations.remove_at(i)
 
 func _get_tree_scene(species: String) -> PackedScene:
 	if _scene_cache.has(species):
@@ -220,6 +263,34 @@ func request_smallplant_spawn(plant_name: String, pos: Vector3) -> void:
 		_spawn_parent.add_child(inst)
 		inst.global_position = pos
 
+func request_tree_spawn(species: String, pos: Vector3) -> void:
+	var scene = _get_tree_scene(species)
+	if not scene:
+		return
+	if not can_spawn_plant_at(scene, pos):
+		return
+	if is_instance_valid(_spawn_parent):
+		var inst = scene.instantiate()
+		_spawn_parent.add_child(inst)
+		inst.global_position = pos
+
+# Spawn reservations
+func reserve_for_scene(plant_scene: PackedScene, pos: Vector3, ttl: float = 1.0) -> bool:
+	var radius: float = 0.0
+	if plant_scene:
+		var inst = plant_scene.instantiate()
+		if inst and inst.has_method("get"):
+			var v = inst.get("needs_free_radius")
+			if typeof(v) == TYPE_FLOAT or typeof(v) == TYPE_INT:
+				radius = float(v)
+		inst.queue_free()
+	if radius <= 0.0:
+		return true # nothing to reserve
+	if not is_space_free(pos, radius):
+		return false
+	_reservations.append({"pos": pos, "radius": radius, "ttl": ttl})
+	return true
+
 # ---------- Global reproduction system ----------
 
 func add_reproduction(species: String, amount: float = 1.0) -> void:
@@ -238,3 +309,12 @@ func get_total_living(species: String) -> int:
 			if (n as LifeForm).species_name == species:
 				count += 1
 	return count
+
+# ---------- Animal daily eating targets ----------
+
+func add_eating_target(species: String, amount: int = 1) -> void:
+	var current: int = int(_eating_target_per_day.get(species, 1))
+	_eating_target_per_day[species] = current + amount
+
+func get_eating_target(species: String) -> int:
+	return int(_eating_target_per_day.get(species, 1))

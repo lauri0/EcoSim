@@ -22,6 +22,7 @@ max_viable_altitude = 15.0
 species_name = "Pine"
 price = 20
 max_age = 12.0
+repro_radius = 10.0
 
 [node name="MeshInstance3D" parent="Model" index="0"]
 transform = Transform3D(150, 0, 0, 0, -6.55671e-06, 150, 0, -150, -6.55671e-06, 0, 0, 0)

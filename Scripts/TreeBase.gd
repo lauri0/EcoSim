@@ -1,4 +1,4 @@
-extends "res://Scripts/Plant.gd"
+extends Plant
 class_name TreeBase
 
 # Tree state enum
@@ -183,24 +183,25 @@ func _logic_update(dt: float) -> void:
 	# Update growth based on state using the batched dt
 	_update_growth(dt)
 
-	# Handle seed lifecycle at a reduced tick
+	# Handle seed lifecycle at a reduced tick (visuals only)
 	_seed_accumulator += dt
 	if _seed_accumulator >= _seed_update_interval:
 		_handle_seed_lifecycle(_seed_accumulator)
 		_seed_accumulator = 0.0
 
-	# Handle reproduction with seconds-based timer
-	time_until_next_repro_check -= dt
-	if time_until_next_repro_check <= 0.0:
-		_try_reproduce()
-		time_until_next_repro_check = ideal_seed_gen_interval * seconds_per_game_day
+	# Natural reproduction disabled; handled by LifeFormReproManager
+	# _tick_reproduction(dt, seconds_per_game_day, is_winter)
+	# time_until_next_repro_check -= dt
+	# if time_until_next_repro_check <= 0.0:
+	# 	_try_reproduce()
+	# 	time_until_next_repro_check = ideal_seed_gen_interval * seconds_per_game_day
 
 func _exit_tree():
 	if tree_manager and tree_manager.has_method("unregister_tree"):
 		tree_manager.unregister_tree(self)
 
 func _try_reproduce():
-	# check altitude, age, maybe spawn a new TreeBase instance…
+	# Disabled: reproduction is centrally managed
 	pass
 
 func _update_growth(delta: float):
@@ -532,6 +533,18 @@ func _spawn_seed_on_tree():
 	spawned_seed = _create_seed_visual(world_spawn_position)
 	seed_ready_to_fly = true
 	#print("Tree ", species_name, " spawned 1 seed at designated spawn point")
+
+func _on_reproduction_event() -> void:
+	# Ensure a seed visual exists upon reproduction (like berries refresh)
+	if not is_instance_valid(spawned_seed):
+		_spawn_seed_on_tree()
+
+func _request_spawn(spawn_pos: Vector3) -> void:
+	# Trees route reproduction spawns to tree spawner
+	var root = get_tree().current_scene
+	var tm = root.find_child("TreeManager", true, false)
+	if tm and tm.has_method("request_tree_spawn"):
+		tm.request_tree_spawn(species_name, spawn_pos)
 
 func _create_seed_visual(spawn_position: Vector3) -> Node3D:
 	# Create a simple spherical seed visual and attach to the tree

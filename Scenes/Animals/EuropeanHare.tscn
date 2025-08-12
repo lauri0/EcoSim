@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3 uid="uid://cwnhu23pdk8sv"]
+
+[ext_resource type="Script" uid="uid://cpxo1cfmmxwj8" path="res://Scripts/Mammal.gd" id="1_1i3ow"]
+
+[node name="EuropeanHare" type="Node3D"]
+script = ExtResource("1_1i3ow")
+walk_speed = 3.0
+swim_speed = 0.0
+vision_range = 30.0
+diet = Array[String](["Grass"])
+species_name = "European Hare"
+price = 25
+max_age = 365.0

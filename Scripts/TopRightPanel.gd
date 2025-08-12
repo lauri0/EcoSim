@@ -30,6 +30,12 @@ func add_revenue(amount: int) -> void:
 	revenue += amount
 	_update_labels()
 
+func add_credits(amount: int) -> void:
+	if amount <= 0:
+		return
+	credits += amount
+	_update_labels()
+
 func get_credits() -> int:
 	return credits
 

@@ -32,22 +32,8 @@ func _logic_update(dt: float) -> void:
 			_spawn_berry()
 
 func _try_reproduce() -> void:
-	# Match SmallPlant reproduction behavior, then refresh the berry
-	if healthPercentage < 0.5:
-		return
-	var root = get_tree().current_scene
-	var terrain = root.find_child("Terrain", true, false)
-	if not terrain or not terrain.has_method("get_height"):
-		return
-	var angle = randf() * TAU
-	var dist = randf_range(repro_radius * 0.25, repro_radius)
-	var offset = Vector3(cos(angle) * dist, 0.0, sin(angle) * dist)
-	var pos = global_position + offset
-	var y = terrain.get_height(pos.x, pos.z)
-	var spawn_pos = Vector3(pos.x, y, pos.z)
-	var tm = root.find_child("TreeManager", true, false)
-	if tm and tm.has_method("request_smallplant_spawn"):
-		tm.request_smallplant_spawn(species_name, spawn_pos)
+	# Use Plant default reproduction then refresh berry visual
+	super._try_reproduce()
 	_refresh_berry()
 
 func _refresh_berry() -> void:
