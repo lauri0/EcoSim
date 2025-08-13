@@ -15,7 +15,7 @@ needs_free_radius = 2.0
 forbidden_neighbors = Array[String](["Birch", "Pine", "Rowan", "Aspen", "Maple", "Oak", "Spruce", "Willow", "Linden"])
 species_name = "Grass"
 price = 2
-max_age = 2.0
+max_age = 3.0
 
 [node name="Model" type="Node3D" parent="."]
 

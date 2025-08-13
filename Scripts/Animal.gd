@@ -20,6 +20,9 @@ class_name Animal
 # Eating multiplier for rewards
 @export var eatPointsMult: float = 1.0
 
+# Animation directory containing species-specific animations (GLB files, one per action)
+@export var animation_dir: String = ""
+
 # Runtime per-day eating progress
 var _eaten_today: int = 0
 var _daily_target: int = 1
@@ -63,6 +66,7 @@ func _refresh_daily_target_if_needed() -> void:
 		if day_idx != _last_day_index:
 			_last_day_index = day_idx
 			_eaten_today = 0
+			_on_new_day()
 	var trm = root.find_child("TreeManager", true, false)
 	if trm and trm.has_method("get_eating_target"):
 		# TreeManager keys are browser keys without spaces
@@ -87,3 +91,20 @@ func _reward_for_eating(eaten: LifeForm) -> void:
 		top_right.add_revenue(amount)
 	if top_right and top_right.has_method("add_credits"):
 		top_right.add_credits(amount)
+	# Track per-species revenue for both eater and eatee
+	if top_right and top_right.has_method("add_species_revenue"):
+		var eater_species: String = species_name
+		var eater_cat: String = "animal"
+		var eatee_species: String = eaten.species_name if eaten else ""
+		var eatee_cat: String = "plant"
+		if eaten is Animal:
+			eatee_cat = "animal"
+		elif eaten is Plant:
+			eatee_cat = "plant"
+		top_right.add_species_revenue(eater_species, amount, eater_cat)
+		if eatee_species != "":
+			top_right.add_species_revenue(eatee_species, amount, eatee_cat)
+
+# Hook for subclasses: called when a new in-game day starts
+func _on_new_day() -> void:
+	pass

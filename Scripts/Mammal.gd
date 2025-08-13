@@ -1,7 +1,115 @@
-extends "res://Scripts/Animal.gd"
+extends Animal
 class_name Mammal
 
-enum ForageState { EXPLORING, MOVING_TO_FOOD, FEEDING }
+## -------------------- State Machine Core --------------------
+class State:
+	var mammal
+	func _init(m):
+		mammal = m
+	func name() -> String:
+		return ""
+	func enter(_prev: String) -> void:
+		pass
+	func exit(_next: String) -> void:
+		pass
+	func tick(_dt: float) -> void:
+		pass
+
+class ExploringState:
+	extends State
+	func name() -> String:
+		return "exploring"
+	func enter(_prev: String) -> void:
+		# Ensure we have somewhere to go
+		if not mammal._has_target:
+			mammal._choose_new_wander_target()
+		mammal._play_state_anim("exploring")
+	func tick(dt: float) -> void:
+		mammal.forage_check_timer -= dt
+		if mammal.forage_check_timer <= 0.0:
+			mammal.forage_check_timer = 2.0
+			mammal.food_target = mammal.find_food_in_range(mammal.global_position, mammal.vision_range)
+			if is_instance_valid(mammal.food_target):
+				mammal._set_move_target(mammal.food_target.global_position)
+				mammal.switch_state("moving_to_food")
+				return
+		if mammal._has_target:
+			mammal._tick_navigation(dt)
+			mammal._play_state_anim("exploring")
+			if mammal.nav_agent and (Time.get_ticks_msec() % 500) < int(dt * 1000.0):
+				mammal.nav_agent.set_target_position(mammal._wander_target)
+			if mammal._nav_arrived():
+				mammal._has_target = false
+		else:
+			mammal._choose_new_wander_target()
+
+class MovingToFoodState:
+	extends State
+	func name() -> String:
+		return "moving_to_food"
+	func enter(_prev: String) -> void:
+		if is_instance_valid(mammal.food_target):
+			mammal._set_move_target(mammal.food_target.global_position)
+		else:
+			mammal.switch_state("exploring")
+		mammal._play_state_anim("moving_to_food")
+	func tick(dt: float) -> void:
+		if not is_instance_valid(mammal.food_target):
+			mammal.switch_state("exploring")
+			return
+		mammal.forage_check_timer -= dt
+		if mammal.forage_check_timer <= 0.0:
+			mammal.forage_check_timer = 2.0
+			mammal._set_move_target(mammal.food_target.global_position)
+		mammal._tick_navigation(dt)
+		mammal._play_state_anim("moving_to_food")
+		var reached := false
+		if mammal.nav_agent:
+			reached = mammal.nav_agent.is_navigation_finished()
+		else:
+			reached = (mammal.global_position - mammal.food_target.global_position).length() <= 0.35
+		if reached:
+			mammal.switch_state("feeding")
+
+class FeedingState:
+	extends State
+	func name() -> String:
+		return "feeding"
+	func enter(_prev: String) -> void:
+		mammal._start_feeding()
+		mammal._play_state_anim("feeding")
+	func tick(dt: float) -> void:
+		mammal._feeding_timer -= dt
+		mammal._play_state_anim("feeding")
+		if mammal._feeding_timer > 0.0:
+			return
+		# Consume the current food target and then look again
+		if is_instance_valid(mammal.food_target):
+			if mammal.food_target.has_method("consume"):
+				mammal.food_target.consume()
+			else:
+				mammal.food_target.queue_free()
+			if mammal.food_target is LifeForm:
+				mammal._reward_for_eating(mammal.food_target as LifeForm)
+				mammal._eaten_today += 1
+			mammal.food_target = null
+		# After eating, look again
+		mammal.food_target = mammal.find_food_in_range(mammal.global_position, mammal.vision_range)
+		if is_instance_valid(mammal.food_target):
+			mammal.switch_state("moving_to_food")
+		else:
+			mammal.switch_state("exploring")
+
+class RestingState:
+	extends State
+	func name() -> String:
+		return "resting"
+	func tick(_dt: float) -> void:
+		mammal._play_state_anim("resting") 
+
+var _states: Dictionary = {}
+var _current_state: State
+var _current_state_name: String = ""
 
 @export var model_scene_path: String = "res://Resources/Animals/Jackrabbit/3D Files/GLTF/Merged LOD/Jackrabbit_LOD_All.glb"
 
@@ -12,14 +120,14 @@ enum ForageState { EXPLORING, MOVING_TO_FOOD, FEEDING }
 var seconds_per_game_day: float = 90.0
 var model_node: Node3D
 var animation_player: AnimationPlayer
+var _anim_lib: AnimationLibrary
 var nav_agent: NavigationAgent3D
 var pick_body: StaticBody3D
 
 var _wander_target: Vector3 = Vector3.ZERO
 var _has_target: bool = false
-var forage_state: ForageState = ForageState.EXPLORING
-var _forage_check_timer: float = 0.0
-var _food_target: Node3D
+var forage_check_timer: float = 0.0
+var food_target: Node3D
 var _feeding_timer: float = 0.0
 
 func _ready():
@@ -42,6 +150,16 @@ func _ready():
 	# Try to find AnimationPlayer within the model tree
 	if model_node:
 		animation_player = model_node.find_child("AnimationPlayer", true, false) as AnimationPlayer
+		if animation_player == null:
+			animation_player = AnimationPlayer.new()
+			animation_player.name = "AnimationPlayer"
+			model_node.add_child(animation_player)
+		# Ensure animations resolve against the model hierarchy
+		animation_player.root_node = model_node.get_path()
+
+	# Load species-specific animations from directory, if provided
+	if animation_dir != "" and animation_player:
+		_load_animations_from_dir(animation_dir)
 
 	# Ensure NavigationAgent3D exists (used by all mammals). Configure for hare-sized agent.
 	nav_agent = find_child("NavigationAgent3D", true, false) as NavigationAgent3D
@@ -52,8 +170,8 @@ func _ready():
 	nav_agent.radius = 0.25
 	nav_agent.height = 0.6
 	nav_agent.max_speed = walk_speed
-	nav_agent.target_desired_distance = 0.8
-	nav_agent.path_desired_distance = 0.8
+	nav_agent.target_desired_distance = 1.0
+	nav_agent.path_desired_distance = 1.0
 	if nav_agent.has_method("set_avoidance_enabled"):
 		nav_agent.set_avoidance_enabled(false)
 	elif "avoidance_enabled" in nav_agent:
@@ -78,7 +196,7 @@ func _ready():
 		# Don't collide actively
 		pick_body.collision_mask = 0
 
-	forage_state = ForageState.EXPLORING
+	_create_state_machine()
 	set_process(true)
 	set_physics_process(false)
 
@@ -100,50 +218,22 @@ func _logic_update(dt: float) -> void:
 	# Sync/reset daily target and decide if we rest
 	_refresh_daily_target_if_needed()
 	if _has_met_daily_target():
-		# Rest: no movement
-		_play_anim_if_exists(["Idle"]) 
+		if _current_state_name != "resting":
+			switch_state("resting")
+		# While resting, do not tick other behaviors
+		if _current_state:
+			_current_state.tick(dt)
 		return
 
-	_tick_forage(dt)
-	match forage_state:
-		ForageState.EXPLORING:
-			if _has_target:
-				_tick_navigation(dt)
-				_play_anim_if_exists(["Walk", "Run", "Idle"]) 
-				# If path stalls, gently reissue the target to keep the agent solving
-				if nav_agent and (Time.get_ticks_msec() % 500) < int(dt * 1000.0):
-					nav_agent.set_target_position(_wander_target)
-				if _nav_arrived():
-					_has_target = false
-			else:
-				_choose_new_wander_target()
-		ForageState.MOVING_TO_FOOD:
-			_tick_navigation(dt)
-			_play_anim_if_exists(["Walk", "Run", "Idle"]) 
-			if nav_agent and is_instance_valid(_food_target) and (Time.get_ticks_msec() % 500) < int(dt * 1000.0):
-				nav_agent.set_target_position(_food_target.global_position)
-		ForageState.FEEDING:
-			_feeding_timer -= dt
-			_play_anim_if_exists(["Eat", "Eating", "Idle"]) 
-			if _feeding_timer <= 0.0:
-				# Consume the current food target and then look again
-				if is_instance_valid(_food_target):
-					if _food_target.has_method("consume"):
-						_food_target.consume()
-					else:
-						_food_target.queue_free()
-					# Reward credits/revenue for eaten lifeform
-					if _food_target is LifeForm:
-						_reward_for_eating(_food_target as LifeForm)
-						_eaten_today += 1
-					_food_target = null
-				# After eating, look again
-				_food_target = find_food_in_range(global_position, vision_range)
-				if is_instance_valid(_food_target):
-					forage_state = ForageState.MOVING_TO_FOOD
-					_set_move_target(_food_target.global_position)
-				else:
-					forage_state = ForageState.EXPLORING
+	if _current_state == null:
+		switch_state("exploring")
+		return
+	_current_state.tick(dt)
+
+# Called from Animal when a new in-game day starts
+func _on_new_day() -> void:
+	if _current_state_name == "resting":
+		switch_state("exploring")
 
 func _choose_new_wander_target() -> void:
 	var radius := 6.0
@@ -203,40 +293,6 @@ func _nav_arrived() -> bool:
 	d.y = 0.0
 	return d.length() <= 0.35
 
-# ---------- Foraging logic ----------
-func _tick_forage(dt: float) -> void:
-	_forage_check_timer -= dt
-	match forage_state:
-		ForageState.EXPLORING:
-			if _forage_check_timer <= 0.0:
-				_forage_check_timer = 2.0
-				_food_target = find_food_in_range(global_position, vision_range)
-				if is_instance_valid(_food_target):
-					forage_state = ForageState.MOVING_TO_FOOD
-					_set_move_target(_food_target.global_position)
-					return
-			# Ensure we are walking somewhere when exploring
-			if not _has_target:
-				_choose_new_wander_target()
-		ForageState.MOVING_TO_FOOD:
-			if not is_instance_valid(_food_target):
-				forage_state = ForageState.EXPLORING
-				return
-			# Refresh target every few seconds in case food moved/was eaten
-			if _forage_check_timer <= 0.0:
-				_forage_check_timer = 2.0
-				_set_move_target(_food_target.global_position)
-			var reached := false
-			if nav_agent:
-				reached = nav_agent.is_navigation_finished()
-			else:
-				reached = (global_position - _food_target.global_position).length() <= 0.35
-			if reached:
-				forage_state = ForageState.FEEDING
-				_start_feeding()
-		ForageState.FEEDING:
-			pass
-
 func _set_move_target(pos: Vector3) -> void:
 	# Snap to nearest walkable point
 	_wander_target = _project_to_navmesh(pos)
@@ -263,26 +319,156 @@ func _reset_model_basis_if_needed() -> void:
 		model_node.basis = Basis.IDENTITY
 
 func _start_feeding() -> void:
-	forage_state = ForageState.FEEDING
 	_feeding_timer = 3.0
 
-func get_forage_state_name() -> String:
-	if typeof(forage_state) != TYPE_INT:
+func get_state_name() -> String:
+	if _current_state_name == "":
 		return "Unknown"
-	match forage_state:
-		ForageState.EXPLORING:
-			return "Exploring"
-		ForageState.MOVING_TO_FOOD:
-			return "MovingToFood"
-		ForageState.FEEDING:
-			return "Feeding"
-	return "Unknown"
+	return _current_state_name
 
-func _play_anim_if_exists(names: Array[String]) -> void:
+func get_forage_state_name() -> String:
+	# Backwards-compatible alias for UI; maps to the new state machine names
+	var n := get_state_name()
+	match n:
+		"exploring":
+			return "Exploring"
+		"moving_to_food":
+			return "MovingToFood"
+		"feeding":
+			return "Feeding"
+		"resting":
+			return "Resting"
+		_:
+			return n
+
+func _play_anim_if_exists(names: Array) -> void:
 	if not animation_player:
 		return
 	for n in names:
-		if animation_player.has_animation(n):
-			if not animation_player.is_playing() or animation_player.current_animation != n:
-				animation_player.play(n)
+		var name_str: String = String(n)
+		# Try plain name first (default unnamed library)
+		if animation_player.has_animation(name_str):
+			if not animation_player.is_playing() or animation_player.current_animation != name_str:
+				animation_player.play(name_str)
 			return
+		# Also try in a library named "default" if present
+		var qualified: String = "default/" + name_str
+		if animation_player.has_animation(qualified):
+			if not animation_player.is_playing() or animation_player.current_animation != qualified:
+				animation_player.play(qualified)
+			return
+
+func _play_state_anim(state_name: String) -> void:
+	var choices: Array = _state_anim_choices.get(state_name, [])
+	if choices.is_empty():
+		return
+	_play_anim_if_exists(choices)
+
+var _state_anim_choices: Dictionary = {
+	"exploring": ["Walk"],
+	"moving_to_food": ["Walk"],
+	"feeding": ["Eat"],
+	"resting": ["Idle_A"]
+}
+
+func _load_animations_from_dir(dir_path: String) -> void:
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		return
+	var files: Array = dir.get_files()
+	for f in files:
+		if not (f.ends_with(".glb") or f.ends_with(".tscn")):
+			continue
+		var full_path = dir_path.rstrip("/") + "/" + f
+		var canonical := _canonical_anim_name_from_filename(f)
+		if canonical == "":
+			continue
+		var packed: PackedScene = load(full_path)
+		if packed:
+			_import_animations_from_scene(packed, canonical)
+
+func _canonical_anim_name_from_filename(file_name: String) -> String:
+	# Examples:
+	#  - Jackrabbit_Walk.glb -> Walk
+	#  - Jackrabbit_Idle_A.glb -> Idle_A
+	var base := file_name
+	var dot := base.rfind(".")
+	if dot > 0:
+		base = base.substr(0, dot)
+	var first_under := base.find("_")
+	if first_under >= 0 and first_under < base.length() - 1:
+		return base.substr(first_under + 1)
+	# Fallback to full base name
+	return base
+
+func _import_animations_from_scene(packed: PackedScene, canonical_name: String) -> void:
+	var inst := packed.instantiate()
+	if inst == null:
+		return
+	var src_player := inst.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if src_player == null:
+		inst.free()
+		return
+	var anim_names := src_player.get_animation_list()
+	if anim_names.size() == 0:
+		inst.free()
+		return
+	var anim_name: String = anim_names[0]
+	var anim: Animation = src_player.get_animation(anim_name)
+	if anim:
+		var dup := anim.duplicate() as Animation
+		if dup:
+			var lib := _ensure_anim_library()
+			if lib:
+				if lib.has_animation(canonical_name):
+					lib.remove_animation(canonical_name)
+				lib.add_animation(canonical_name, dup)
+	inst.free()
+
+
+func _ensure_anim_library() -> AnimationLibrary:
+	if animation_player == null:
+		return null
+	if _anim_lib != null:
+		return _anim_lib
+	var lib: AnimationLibrary = null
+	# Prefer the unnamed default library so animations can be referenced as plain names
+	if animation_player.has_animation_library(""):
+		lib = animation_player.get_animation_library("")
+	elif animation_player.has_animation_library("default"):
+		lib = animation_player.get_animation_library("default")
+	if lib == null:
+		lib = AnimationLibrary.new()
+		animation_player.add_animation_library("", lib)
+	_anim_lib = lib
+	return _anim_lib
+
+# --------------- State Machine helpers ---------------
+func _create_state_machine() -> void:
+	_states.clear()
+	_define_states()
+	# Default to exploring at start of day
+	switch_state("exploring")
+
+func _define_states() -> void:
+	# Subclasses can override this to add/replace states (e.g., climbing)
+	register_state("exploring", ExploringState.new(self))
+	register_state("moving_to_food", MovingToFoodState.new(self))
+	register_state("feeding", FeedingState.new(self))
+	register_state("resting", RestingState.new(self))
+
+func register_state(state_name: String, state: State) -> void:
+	_states[state_name] = state
+
+func switch_state(state_name: String) -> void:
+	if _current_state_name == state_name:
+		return
+	var next: State = _states.get(state_name, null)
+	if next == null:
+		return
+	if _current_state:
+		_current_state.exit(state_name)
+	var prev_name := _current_state_name
+	_current_state = next
+	_current_state_name = state_name
+	_current_state.enter(prev_name)

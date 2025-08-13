@@ -56,7 +56,7 @@ func _try_reproduce() -> void:
 	if not terrain or not terrain.has_method("get_height"):
 		return
 	var angle = randf() * TAU
-	var dist = randf_range(repro_radius * 0.25, repro_radius)
+	var dist = randf_range(blocking_radius, repro_radius)
 	var offset = Vector3(cos(angle) * dist, 0.0, sin(angle) * dist)
 	var pos = global_position + offset
 	var y = terrain.get_height(pos.x, pos.z)

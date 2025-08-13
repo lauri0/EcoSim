@@ -338,6 +338,10 @@ func _spawn_tree(species: String, spawn_position: Vector3) -> void:
 				if tree_instance:
 					tree_instance.queue_free()
 				return
+		# Track expense for this species (plants category for trees)
+		var trp = top_right_panel
+		if trp and trp.has_method("add_species_expense") and tree_instance is LifeForm:
+			trp.add_species_expense((tree_instance as LifeForm).species_name, price, "plant")
 		
 		terrain.get_parent().add_child(tree_instance)
 		var terrain_height = terrain.get_height(spawn_position.x, spawn_position.z)
@@ -369,6 +373,10 @@ func _spawn_plant(plant: String, spawn_position: Vector3) -> void:
 				if plant_instance:
 					plant_instance.queue_free()
 				return
+		# Track expense for this species (plants category)
+		var trp2 = top_right_panel
+		if trp2 and trp2.has_method("add_species_expense") and plant_instance is LifeForm:
+			trp2.add_species_expense((plant_instance as LifeForm).species_name, price, "plant")
 
 		terrain.get_parent().add_child(plant_instance)
 		var terrain_height = terrain.get_height(spawn_position.x, spawn_position.z)
@@ -400,6 +408,10 @@ func _spawn_mammal(species: String, spawn_position: Vector3) -> void:
 				if inst:
 					inst.queue_free()
 				return
+		# Track expense for this species (animals category)
+		var trp3 = top_right_panel
+		if trp3 and trp3.has_method("add_species_expense") and inst is LifeForm:
+			trp3.add_species_expense((inst as LifeForm).species_name, price, "animal")
 		terrain.get_parent().add_child(inst)
 		var terrain_height = terrain.get_height(spawn_position.x, spawn_position.z)
 		spawn_position.y = terrain_height
@@ -1010,6 +1022,12 @@ func _on_add_reproduction_pressed(species_or_plant: String) -> void:
 			return
 	if tm.has_method("add_reproduction"):
 		tm.add_reproduction(species_or_plant, 1.0)
+	# Track expense for reproduction increase (category depends on whether species is animal or plant)
+	var category: String = "plant"
+	if mammals_list.has(species_or_plant):
+		category = "animal"
+	if top_right_panel and top_right_panel.has_method("add_species_expense"):
+		top_right_panel.add_species_expense(species_or_plant, repro_cost, category)
 	# Refresh the lines for immediate feedback
 	_rebuild_species_browser_entries()
 	_rebuild_plants_browser_entries()
@@ -1030,6 +1048,9 @@ func _on_add_eating_pressed(mammal_species: String) -> void:
 			return
 	if tm.has_method("add_eating_target"):
 		tm.add_eating_target(mammal_species, 1)
+	# Track expense for eating target increase (animals only)
+	if top_right_panel and top_right_panel.has_method("add_species_expense"):
+		top_right_panel.add_species_expense(mammal_species, upgrade_cost, "animal")
 	# Refresh mammals UI for immediate feedback
 	_rebuild_mammals_browser_entries()
 
@@ -1091,24 +1112,35 @@ func _get_base_price_for(species_or_plant_name: String) -> int:
 	if plants_info_cache.has(species_or_plant_name):
 		var pinfo: Dictionary = plants_info_cache[species_or_plant_name]
 		return int(pinfo.get("price", 0))
-	# Fallback: load scene and read LifeForm.price
-	var scene: PackedScene = null
-	var path_tree = "res://Scenes/Trees/" + species_or_plant_name + ".tscn"
-	scene = load(path_tree)
-	if not scene:
-		var path_plant = "res://Scenes/SmallPlants/" + species_or_plant_name + ".tscn"
-		scene = load(path_plant)
-	if not scene:
-		var path_mammal = "res://Scenes/Animals/" + species_or_plant_name + ".tscn"
-		scene = load(path_mammal)
-	if scene:
-		var inst = scene.instantiate()
-		if inst is LifeForm:
-			var price_val: int = (inst as LifeForm).price
-			inst.queue_free()
-			return price_val
-		if inst:
-			inst.queue_free()
+	if mammals_info_cache.has(species_or_plant_name):
+		var minfo: Dictionary = mammals_info_cache[species_or_plant_name]
+		return int(minfo.get("price", 0))
+	# Fallback: load scene and read LifeForm.price using correct category and existence checks
+	var paths: Array[String] = []
+	# Prefer known category ordering to avoid logging invalid loads
+	if mammals_list.has(species_or_plant_name):
+		paths.append("res://Scenes/Animals/" + species_or_plant_name + ".tscn")
+	elif plants_list.has(species_or_plant_name):
+		paths.append("res://Scenes/SmallPlants/" + species_or_plant_name + ".tscn")
+	else:
+		# Default to tree if in species list; otherwise try all categories safely
+		if species_list.has(species_or_plant_name):
+			paths.append("res://Scenes/Trees/" + species_or_plant_name + ".tscn")
+		else:
+			paths.append("res://Scenes/Trees/" + species_or_plant_name + ".tscn")
+			paths.append("res://Scenes/SmallPlants/" + species_or_plant_name + ".tscn")
+			paths.append("res://Scenes/Animals/" + species_or_plant_name + ".tscn")
+	for p in paths:
+		if ResourceLoader.exists(p):
+			var scene: PackedScene = load(p)
+			if scene:
+				var inst = scene.instantiate()
+				if inst is LifeForm:
+					var price_val: int = (inst as LifeForm).price
+					inst.queue_free()
+					return price_val
+				if inst:
+					inst.queue_free()
 	return 0
 
 func _try_inspect_entity_at_mouse_position(mouse_pos: Vector2):
