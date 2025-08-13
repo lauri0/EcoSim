@@ -4,6 +4,8 @@ class_name LifeFormReproManager
 # Tracks living lifeforms by a normalized species key (UI/species browser key)
 # Key normalization removes spaces to match entries like "EuropeanHare".
 var _species_to_lifeforms: Dictionary = {}
+# Daily schedule: species_key -> Dictionary[int hour, int count]
+var _daily_schedule: Dictionary = {}
 
 func _ready():
     # Listen to hourly updates to detect start-of-day
@@ -36,17 +38,19 @@ func _to_species_key(lf: LifeForm) -> String:
     return lf.species_name.replace(" ", "")
 
 func _on_time_updated(_year: int, _season: String, hour: int) -> void:
-    # Trigger at start of each in-game day
+    # Rebuild schedule at start of each in-game day
     if hour == 0:
-        _perform_daily_reproduction()
+        _build_todays_schedule()
+    # Execute any scheduled reproduction events for this hour
+    _run_scheduled_reproduction(hour)
 
-func _perform_daily_reproduction() -> void:
+func _build_todays_schedule() -> void:
     var root = get_tree().current_scene
     var tmgr = root.find_child("TreeManager", true, false)
-    var terrain = root.find_child("Terrain", true, false)
     if not tmgr:
         return
-    # For each species key with living individuals, spawn according to invested reproduction
+    _daily_schedule.clear()
+    # For each species key with living individuals, schedule births across the day
     for key in _species_to_lifeforms.keys():
         var rpd: float = 0.0
         if tmgr.has_method("get_reproduction"):
@@ -54,41 +58,56 @@ func _perform_daily_reproduction() -> void:
         var births: int = int(floor(rpd))
         if births <= 0:
             continue
-        var candidates: Array = []
-        # Collect valid instances; registration might contain freed nodes
-        var arr: Array = _species_to_lifeforms.get(key, [])
-        for n in arr:
-            if is_instance_valid(n):
-                candidates.append(n)
-        if candidates.is_empty():
+        # Compute evenly spaced integer hours using round to nearest hour for symmetry
+        # Times h_k = round(k * 24 / (births + 1)), k=1..births
+        var schedule_for_species: Dictionary = {}
+        for k in range(1, births + 1):
+            var h: int = int(round(float(k) * 24.0 / float(births + 1)))
+            h = clamp(h, 0, 23)
+            schedule_for_species[h] = int(schedule_for_species.get(h, 0)) + 1
+        _daily_schedule[key] = schedule_for_species
+
+func _run_scheduled_reproduction(hour: int) -> void:
+    if _daily_schedule.is_empty():
+        return
+    var root = get_tree().current_scene
+    var tmgr = root.find_child("TreeManager", true, false)
+    var terrain = root.find_child("Terrain", true, false)
+    if not tmgr:
+        return
+    for key in _daily_schedule.keys():
+        var schedule_for_species: Dictionary = _daily_schedule.get(key, {})
+        var count: int = int(schedule_for_species.get(hour, 0))
+        if count <= 0:
             continue
-        # Pick 2x births at random (or as many as population allows)
-        var sample_size: int = min(births * 2, candidates.size())
-        candidates.shuffle()
-        var sampled: Array = candidates.slice(0, sample_size)
-        # Sort by health descending
-        sampled.sort_custom(func(a, b):
-            var ha = (a as LifeForm).healthPercentage if a is LifeForm else 0.0
-            var hb = (b as LifeForm).healthPercentage if b is LifeForm else 0.0
-            return hb < ha
-        )
-        # Top half become parents
-        var parents: Array = sampled.slice(0, int(ceil(sample_size * 0.5)))
-        # Spawn near each parent up to the number of births
-        var spawned: int = 0
-        for p in parents:
-            if spawned >= births:
-                break
-            if not is_instance_valid(p):
-                continue
-            var plf := p as LifeForm
-            if not plf:
-                continue
-            if plf.healthPercentage < 0.5:
-                continue
-            var pos := _pick_spawn_near(plf, terrain)
-            _spawn_same_species(plf, key, pos, tmgr, terrain)
-            spawned += 1
+        for i in range(count):
+            _perform_one_reproduction(key, tmgr, terrain)
+
+func _perform_one_reproduction(species_key: String, tmgr: Node, terrain: Node) -> void:
+    # Build candidate list of living individuals with health >= 50%
+    var arr: Array = _species_to_lifeforms.get(species_key, [])
+    var candidates: Array = []
+    for n in arr:
+        if not is_instance_valid(n):
+            continue
+        var lf := n as LifeForm
+        if not lf:
+            continue
+        if lf.healthPercentage >= 0.5:
+            candidates.append(lf)
+    if candidates.is_empty():
+        return
+    # Pick one random candidate
+    candidates.shuffle()
+    var parent: LifeForm = candidates[0]
+    # Try up to three times to spawn close to the same individual
+    var spawned: bool = false
+    for attempt in range(3):
+        var pos := _pick_spawn_near(parent, terrain)
+        spawned = _try_spawn_same_species(parent, species_key, pos, tmgr, terrain)
+        if spawned:
+            break
+    # Done (if all attempts failed, skip silently)
 
 func _pick_spawn_near(plf: LifeForm, terrain: Node) -> Vector3:
     var angle = randf() * TAU
@@ -99,37 +118,48 @@ func _pick_spawn_near(plf: LifeForm, terrain: Node) -> Vector3:
         base.y = terrain.get_height(base.x, base.z)
     return base
 
-func _spawn_same_species(parent: LifeForm, species_key: String, pos: Vector3, tmgr: Node, terrain: Node) -> void:
-    # Trees delegate to TreeManager tree spawn
+func _try_spawn_same_species(parent: LifeForm, species_key: String, pos: Vector3, tmgr: Node, terrain: Node) -> bool:
+    # Trees: pre-validate then request spawn
     if parent is TreeBase:
+        var scene_path = "res://Scenes/Trees/%s.tscn" % species_key
+        var packed: PackedScene = load(scene_path)
+        if not packed:
+            return false
+        if tmgr.has_method("can_spawn_plant_at") and not tmgr.can_spawn_plant_at(packed, pos):
+            return false
         if tmgr.has_method("request_tree_spawn"):
             tmgr.request_tree_spawn(species_key, pos)
-        return
-    # Small plants delegate to TreeManager small plant spawn
+            return true
+        return false
+    # Small plants: pre-validate then request spawn
     if parent is SmallPlant:
+        var plant_scene_path = "res://Scenes/SmallPlants/%s.tscn" % species_key
+        var plant_packed: PackedScene = load(plant_scene_path)
+        if not plant_packed:
+            return false
+        if tmgr.has_method("can_spawn_plant_at") and not tmgr.can_spawn_plant_at(plant_packed, pos):
+            return false
         if tmgr.has_method("request_smallplant_spawn"):
             tmgr.request_smallplant_spawn(species_key, pos)
-        return
-    # Animals: instantiate their scene directly (Scenes/Animals/<key>.tscn)
-    var scene_path = "res://Scenes/Animals/%s.tscn" % species_key
-    var packed: PackedScene = load(scene_path)
-    if not packed:
-        return
-    # Optional: validate bounds/spacing using existing helper
-    if tmgr.has_method("can_spawn_plant_at"):
-        if not tmgr.can_spawn_plant_at(packed, pos):
-            return
+            return true
+        return false
+    # Animals: instantiate directly after validation
+    var animal_scene_path = "res://Scenes/Animals/%s.tscn" % species_key
+    var animal_packed: PackedScene = load(animal_scene_path)
+    if not animal_packed:
+        return false
+    if tmgr.has_method("can_spawn_plant_at") and not tmgr.can_spawn_plant_at(animal_packed, pos):
+        return false
     var parent_node: Node = terrain.get_parent() if terrain else get_tree().current_scene
     if not is_instance_valid(parent_node):
         parent_node = get_tree().current_scene
-    var inst = packed.instantiate()
+    var inst = animal_packed.instantiate()
     parent_node.add_child(inst)
-    # Snap to ground height
     if terrain and terrain.has_method("get_height"):
         pos.y = terrain.get_height(pos.x, pos.z)
     inst.global_position = pos
-    # Random yaw
     if inst is Node3D:
         (inst as Node3D).rotation.y = randf() * TAU
+    return true
 
 

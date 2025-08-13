@@ -1,9 +1,9 @@
 [gd_scene load_steps=2 format=3 uid="uid://cwnhu23pdk8sv"]
 
-[ext_resource type="Script" uid="uid://cpxo1cfmmxwj8" path="res://Scripts/Mammal.gd" id="1_1i3ow"]
+[ext_resource type="Script" uid="uid://cpxo1cfmmxwj8" path="res://Scripts/Mammal.gd" id="1_7ydsa"]
 
-[node name="EuropeanHare" type="Node3D"]
-script = ExtResource("1_1i3ow")
+[node name="European Hare" type="Node3D"]
+script = ExtResource("1_7ydsa")
 walk_speed = 3.0
 swim_speed = 0.0
 vision_range = 30.0

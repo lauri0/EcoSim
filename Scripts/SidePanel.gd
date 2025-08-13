@@ -43,7 +43,7 @@ var mammals_cache_warmed: bool = false
 # A hard‐coded list, or you could load these from your scenes folder
 var species_list = ["Birch","Pine","Rowan"]
 var plants_list = ["Grass", "Lingonberry"]
-var mammals_list = ["EuropeanHare"]
+var mammals_list = ["European Hare"]
 
 # Tree spawning state
 var selected_tree_species: String = ""
@@ -513,6 +513,8 @@ func _create_species_selection_popup():
 	species_selection_popup = PopupPanel.new()
 	species_selection_popup.size = Vector2(560, 740)
 	species_selection_popup.set_flag(Window.FLAG_RESIZE_DISABLED, true)
+	# Allow background input to continue so right-click outside can close via global handler
+	species_selection_popup.exclusive = false
 
 	# Root container inside popup
 	var root_vbox = VBoxContainer.new()
@@ -532,6 +534,10 @@ func _create_species_selection_popup():
 	scroll.custom_minimum_size = Vector2(540, 680)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root_vbox.add_child(scroll)
+
+	# Close on right-click even when the popup captures input
+	species_selection_popup.window_input.connect(_on_popup_gui_input)
+	scroll.gui_input.connect(_on_popup_gui_input)
 
 	var list_vbox = VBoxContainer.new()
 	list_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -555,6 +561,7 @@ func _create_plants_selection_popup():
 	plants_selection_popup = PopupPanel.new()
 	plants_selection_popup.size = Vector2(560, 740)
 	plants_selection_popup.set_flag(Window.FLAG_RESIZE_DISABLED, true)
+	plants_selection_popup.exclusive = false
 
 	var root_vbox = VBoxContainer.new()
 	root_vbox.size = Vector2(540, 720)
@@ -571,6 +578,10 @@ func _create_plants_selection_popup():
 	scroll.custom_minimum_size = Vector2(540, 680)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root_vbox.add_child(scroll)
+
+	# Close on right-click even when the popup captures input
+	plants_selection_popup.window_input.connect(_on_popup_gui_input)
+	scroll.gui_input.connect(_on_popup_gui_input)
 
 	var list_vbox = VBoxContainer.new()
 	list_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -590,6 +601,7 @@ func _create_mammals_selection_popup():
 	mammals_selection_popup = PopupPanel.new()
 	mammals_selection_popup.size = Vector2(560, 740)
 	mammals_selection_popup.set_flag(Window.FLAG_RESIZE_DISABLED, true)
+	mammals_selection_popup.exclusive = false
 
 	var root_vbox = VBoxContainer.new()
 	root_vbox.size = Vector2(540, 720)
@@ -606,6 +618,10 @@ func _create_mammals_selection_popup():
 	scroll.custom_minimum_size = Vector2(540, 680)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root_vbox.add_child(scroll)
+
+	# Close on right-click even when the popup captures input
+	mammals_selection_popup.window_input.connect(_on_popup_gui_input)
+	scroll.gui_input.connect(_on_popup_gui_input)
 
 	var list_vbox = VBoxContainer.new()
 	list_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -1053,6 +1069,21 @@ func _on_add_eating_pressed(mammal_species: String) -> void:
 		top_right_panel.add_species_expense(mammal_species, upgrade_cost, "animal")
 	# Refresh mammals UI for immediate feedback
 	_rebuild_mammals_browser_entries()
+
+func _on_popup_gui_input(event: InputEvent) -> void:
+	# Ensure species browsers close on right-click even when the popup consumes input
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+		_clear_all_selections()
+		if tree_info_popup and tree_info_popup.visible:
+			tree_info_popup.hide()
+			_on_popup_hide()
+		if species_selection_popup and species_selection_popup.visible:
+			species_selection_popup.hide()
+		if plants_selection_popup and plants_selection_popup.visible:
+			plants_selection_popup.hide()
+		if mammals_selection_popup and mammals_selection_popup.visible:
+			mammals_selection_popup.hide()
+		accept_event()
 
 func _format_days(days: float) -> String:
 	# Show without trailing .0 for whole numbers
