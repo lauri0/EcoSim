@@ -17,6 +17,7 @@ seed_spawn_point = Vector3(0, 4.8, 0)
 seed_type = "cone"
 seed_size = 0.2
 seed_mass = 0.005
+seed_value = 4
 min_viable_altitude = 4.0
 max_viable_altitude = 15.0
 species_name = "Pine"

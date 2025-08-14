@@ -43,7 +43,7 @@ var mammals_cache_warmed: bool = false
 # A hard‐coded list, or you could load these from your scenes folder
 var species_list = ["Birch","Pine","Rowan"]
 var plants_list = ["Grass", "Lingonberry"]
-var mammals_list = ["European Hare"]
+var mammals_list = ["European Hare", "Squirrel"]
 
 # Tree spawning state
 var selected_tree_species: String = ""
@@ -1236,13 +1236,13 @@ func _format_mammal_info(m: Mammal) -> String:
 	var info = "[b]%s[/b]\n\n" % m.species_name
 	info += "[b]Age:[/b] %s\n" % age_text
 	info += "[b]Health:[/b] %s\n" % health_text
-	var mstate := "?"
-	if m.has_method("get_mammal_state_name"):
-		mstate = m.get_mammal_state_name()
-	var fstate := "?"
-	if m.has_method("get_forage_state_name"):
-		fstate = m.get_forage_state_name()
-	info += "[b]State:[/b] %s | [b]Forage:[/b] %s\n" % [mstate, fstate]
+	var mstate_caps := "UNKNOWN"
+	var mstate_nice := "Unknown"
+	if m.has_method("get_state_name"):
+		mstate_caps = m.get_state_name()
+	if m.has_method("get_state_display_name"):
+		mstate_nice = m.get_state_display_name()
+	info += "[b]State:[/b] %s (%s)\n" % [mstate_caps, mstate_nice]
 	info += "[b]Walk Speed:[/b] %.1f m/s | [b]Vision:[/b] %.1f m\n" % [m.walk_speed, m.vision_range]
 	info += "[b]Diet:[/b] " + ", ".join(m.get_preferred_diet())
 	return info

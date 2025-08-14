@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/ClimbingMammal.gd" id="1_0"]
+
+[node name="Squirrel" type="Node3D"]
+script = ExtResource("1_0")
+walk_speed = 2.5
+swim_speed = 0.0
+vision_range = 35.0
+animation_dir = "res://Resources/Animals/Squirrel/3D Files/GLTF/Animations/Single/"
+model_scene_path = "res://Resources/Animals/Squirrel/3D Files/GLTF/Merged LOD/Squirrel_LOD_All.glb"
+species_name = "Squirrel"
+price = 10
+max_age = 5.0
+
+

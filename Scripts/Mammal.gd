@@ -76,6 +76,8 @@ class FeedingState:
 	func name() -> String:
 		return "feeding"
 	func enter(_prev: String) -> void:
+		# Ensure body is horizontal while eating (pitch neutral) for all mammals
+		mammal._set_model_pitch(0.0)
 		mammal._start_feeding()
 		mammal._play_state_anim("feeding")
 	func tick(dt: float) -> void:
@@ -323,23 +325,26 @@ func _start_feeding() -> void:
 
 func get_state_name() -> String:
 	if _current_state_name == "":
-		return "Unknown"
-	return _current_state_name
+		return "UNKNOWN"
+	return _current_state_name.to_upper()
 
 func get_forage_state_name() -> String:
-	# Backwards-compatible alias for UI; maps to the new state machine names
-	var n := get_state_name()
-	match n:
+	# Deprecated: kept for compatibility with older UI code paths
+	return get_state_name()
+
+func get_state_display_name() -> String:
+	# Title-cased, human-friendly names for UI
+	match _current_state_name:
 		"exploring":
 			return "Exploring"
 		"moving_to_food":
-			return "MovingToFood"
+			return "Moving To Food"
 		"feeding":
 			return "Feeding"
 		"resting":
 			return "Resting"
 		_:
-			return n
+			return _current_state_name.capitalize()
 
 func _play_anim_if_exists(names: Array) -> void:
 	if not animation_player:
@@ -442,6 +447,13 @@ func _ensure_anim_library() -> AnimationLibrary:
 		animation_player.add_animation_library("", lib)
 	_anim_lib = lib
 	return _anim_lib
+
+# --------------- Model orientation helpers ---------------
+func _set_model_pitch(angle_rad: float) -> void:
+	if model_node:
+		var r = model_node.rotation
+		r.x = angle_rad
+		model_node.rotation = r
 
 # --------------- State Machine helpers ---------------
 func _create_state_machine() -> void:

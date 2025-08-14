@@ -4,9 +4,8 @@ class_name TreeBase
 # Tree state enum
 enum TreeState {
 	GROWING,
-	SEED_PRODUCTION,
-	SEED_MATURATION,
 	MATURE,
+	DORMANT,
 	DYING
 }
 
@@ -28,6 +27,7 @@ enum TreeState {
 @export var seed_size: float = 0.1
 @export var seed_mass: float = 0.001
 @export var seed_germ_chance: float = 0.1
+@export var seed_value: int = 5  # Revenue gained by animals when eating this seed
 
 ## Inherited from LifeForm:
 ## var healthPercentage: float
@@ -37,8 +37,8 @@ var state:                         TreeState = TreeState.GROWING
 ## If progress reaches max_growth_progress then the tree is fully grown
 var growth_progress:               float = 0.0
 
-var seed_production_progress:      float = 0.0
-var seed_maturation_progress:      float = 0.0
+var seed_production_progress:      float = 0.0 # deprecated
+var seed_maturation_progress:      float = 0.0 # deprecated
 var state_percentage:              float = 0.0
 var time_until_next_repro_check:   float = 0.0
 
@@ -223,8 +223,8 @@ func _update_growth(delta: float):
 		state_percentage = clamp(state_percentage, 0.0, 1.0)
 		return
 	
-	# Skip growth/seed progress during winter (but not death)
-	if is_winter:
+	# Skip growth while dormant (winter)
+	if state == TreeState.DORMANT:
 		return
 	
 	match state:
@@ -239,42 +239,14 @@ func _update_growth(delta: float):
 			# Update state percentage for UI
 			state_percentage = growth_progress / max_growth_progress
 			
-			# Check if fully grown - go straight to seed production
+			# Check if fully grown - switch to resting (MATURE) until spring
 			if growth_progress >= max_growth_progress:
-				state = TreeState.SEED_PRODUCTION
-				state_percentage = 0.0
-		
-		TreeState.SEED_PRODUCTION:
-			# Progress measured in in-game days
-			seed_production_progress += (delta / seconds_per_game_day) * healthPercentage
-			seed_production_progress = min(seed_production_progress, ideal_seed_gen_interval)
-			state_percentage = seed_production_progress / ideal_seed_gen_interval
-			
-			if seed_production_progress >= ideal_seed_gen_interval:
-				state = TreeState.SEED_MATURATION
-				seed_production_progress = 0.0
-				state_percentage = 0.0
-		
-		TreeState.SEED_MATURATION:
-			# Progress measured in in-game days
-			seed_maturation_progress += (delta / seconds_per_game_day) * healthPercentage
-			seed_maturation_progress = min(seed_maturation_progress, ideal_seed_maturation_interval)
-			state_percentage = seed_maturation_progress / ideal_seed_maturation_interval
-			
-			if seed_maturation_progress >= ideal_seed_maturation_interval:
-				# Keep seed attached like berries; ensure a visual seed exists
-				if not is_instance_valid(spawned_seed):
-					_spawn_seed_on_tree()
-				# Go straight back to seed production, skip MATURE state
-				state = TreeState.SEED_PRODUCTION
-				seed_maturation_progress = 0.0
+				state = TreeState.MATURE
 				state_percentage = 0.0
 		
 		TreeState.MATURE:
-			# This state is now only used for initial maturation after growth
-			# Trees should not normally stay in this state
-			state = TreeState.SEED_PRODUCTION
-			state_percentage = 0.0
+			# Resting; seeds are spawned at season changes
+			pass
 	
 	# Safety clamp to ensure state_percentage never exceeds 100%
 	state_percentage = clamp(state_percentage, 0.0, 1.0)
@@ -312,16 +284,27 @@ func get_state_name() -> String:
 	match state:
 		TreeState.GROWING:
 			return "GROWING"
-		TreeState.SEED_PRODUCTION:
-			return "SEED_PRODUCTION"
-		TreeState.SEED_MATURATION:
-			return "SEED_MATURATION"
 		TreeState.MATURE:
 			return "MATURE"
+		TreeState.DORMANT:
+			return "DORMANT"
 		TreeState.DYING:
 			return "DYING"
 		_:
 			return "UNKNOWN"
+
+func get_state_display_name() -> String:
+	match state:
+		TreeState.GROWING:
+			return "Growing"
+		TreeState.MATURE:
+			return "Mature"
+		TreeState.DORMANT:
+			return "Dormant"
+		TreeState.DYING:
+			return "Dying"
+		_:
+			return "Unknown"
 
 func _setup_seasonal_materials():
 	# Ensure all mesh surfaces have a valid material to avoid renderer null-material errors
@@ -406,6 +389,25 @@ func _on_season_changed(season: String, winter_factor: float):
 		is_winter = should_be_winter
 		is_autumn = should_be_autumn
 		_update_seasonal_appearance()
+
+	# Seasonal transitions and seed spawn policy
+	var s := season.to_lower()
+	if s == "winter":
+		# Enter dormancy during winter
+		if state != TreeState.DYING:
+			state = TreeState.DORMANT
+	elif s == "summer":
+		# At summer start, spawn a seed if fully grown and none present
+		if state != TreeState.DYING and growth_progress >= max_growth_progress:
+			if not is_instance_valid(spawned_seed):
+				_spawn_seed_on_tree()
+	else:
+		# Leaving winter: if we were dormant, resume mature/growing depending on growth
+		if state == TreeState.DORMANT:
+			if growth_progress >= max_growth_progress:
+				state = TreeState.MATURE
+			else:
+				state = TreeState.GROWING
 
 func _update_seasonal_appearance():
 	if not mesh_instance or not original_leaf_material or not winter_leaf_material:
@@ -511,19 +513,8 @@ func _update_winter_color_transition():
 		_apply_transition(from_color, to_color, transition_progress, true)
 
 func _handle_seed_lifecycle(_delta: float):
-	match state:
-		TreeState.SEED_PRODUCTION:
-			# Seeds are being produced - no visual seeds yet
-			pass
-			
-		TreeState.SEED_MATURATION:
-			# Seeds are maturing on the tree
-			if not seed_ready_to_fly and not spawned_seed:
-				_spawn_seed_on_tree()
-			
-		TreeState.MATURE:
-			# Mature trees are in idle state, no seed actions needed
-			pass
+	# Seeds are spawned at summer start; nothing to do each tick here.
+	pass
 
 func _spawn_seed_on_tree():
 	# Create single seed at the designated spawn point
@@ -595,6 +586,7 @@ func _destroy_attached_seed():
 		print("Destroying attached seed")
 		spawned_seed.queue_free()
 		spawned_seed = null
+		seed_ready_to_fly = false
 
 func _start_falling():
 	if has_fallen:
