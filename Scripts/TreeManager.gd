@@ -57,6 +57,7 @@ func can_spawn_plant_at(plant_scene: PackedScene, pos: Vector3) -> bool:
 	var ok := true
 	# Special rule for water-surface plants: must be over underwater terrain
 	var is_water_surface: bool = false
+	var is_underwater: bool = false
 	# Altitude constraint (if the instance exposes min/max viable altitude)
 	var altitude: float = pos.y
 	if _terrain and _terrain.has_method("get_height"):
@@ -88,8 +89,26 @@ func can_spawn_plant_at(plant_scene: PackedScene, pos: Vector3) -> bool:
 		# Require terrain at XZ to be at or below water level
 		if altitude > wl:
 			ok = false
-	# Apply generic altitude constraints only for non-water plants
-	if ok and not is_water_surface and (has_min_alt or has_max_alt):
+	# Special rule for underwater plants: must be below water by at least required depth
+	if inst and inst.has_method("is_underwater_plant") and inst.is_underwater_plant():
+		is_underwater = true
+		var wl2: float = 0.0
+		var root2 = get_tree().current_scene
+		if root2:
+			var side2 = root2.find_child("SidePanel", true, false)
+			if side2 and side2.has_method("get"):
+				var v2 = side2.get("water_level")
+				if typeof(v2) == TYPE_FLOAT or typeof(v2) == TYPE_INT:
+					wl2 = float(v2)
+		var req_depth: float = 1.5
+		if inst and inst.has_method("get"):
+			var rd = inst.get("required_depth_below_surface")
+			if typeof(rd) == TYPE_FLOAT or typeof(rd) == TYPE_INT:
+				req_depth = float(rd)
+		if altitude > wl2 - req_depth:
+			ok = false
+	# Apply generic altitude constraints only for non-water, non-underwater plants
+	if ok and not is_water_surface and not is_underwater and (has_min_alt or has_max_alt):
 		if (has_min_alt and altitude < min_alt) or (has_max_alt and altitude > max_alt):
 			ok = false
 	# Plants define spacing/neighbor constraints via exported properties
@@ -310,6 +329,16 @@ func request_smallplant_spawn(plant_name: String, pos: Vector3) -> void:
 					if typeof(v) == TYPE_FLOAT or typeof(v) == TYPE_INT:
 						wl = float(v)
 			spawn_p.y = wl
+		elif inst and inst.has_method("is_underwater_plant") and inst.is_underwater_plant():
+			var wl3: float = 0.0
+			var root3 = get_tree().current_scene
+			if root3:
+				var side3 = root3.find_child("SidePanel", true, false)
+				if side3 and side3.has_method("get"):
+					var v3 = side3.get("water_level")
+					if typeof(v3) == TYPE_FLOAT or typeof(v3) == TYPE_INT:
+						wl3 = float(v3)
+			spawn_p.y = wl3 - 1.0
 		inst.global_position = spawn_p
 
 func request_tree_spawn(species: String, pos: Vector3) -> void:
@@ -358,6 +387,13 @@ func get_reproduction(species: String) -> float:
 	return float(_reproduction_per_day.get(species, 0.0))
 
 func get_total_living(species: String) -> int:
+	# Prefer LifeFormReproManager authoritative count (tracks all lifeforms, not only those registered as trees)
+	var root = get_tree().current_scene
+	if root:
+		var rm = root.find_child("LifeFormReproManager", true, false)
+		if rm and rm.has_method("get_total_living"):
+			return int(rm.get_total_living(species))
+	# Fallback: count among registered flora
 	var count: int = 0
 	for n in trees:
 		if not is_instance_valid(n):

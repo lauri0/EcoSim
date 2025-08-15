@@ -1,13 +1,17 @@
-[gd_scene load_steps=4 format=3 uid="uid://cb377mitvod5l"]
+[gd_scene load_steps=5 format=3 uid="uid://cb377mitvod5l"]
 
 [ext_resource type="Script" uid="uid://cnwxwxevcjdlw" path="res://Scripts/Lingonberry.gd" id="1_1"]
-[ext_resource type="ArrayMesh" uid="uid://cn2m7yj1dhei2" path="res://Resources/Meshes/SmallPlants/Berrybush.res" id="2_1"]
+[ext_resource type="ArrayMesh" uid="uid://guou0m0rlb2k" path="res://Resources/Meshes/Pack3/Bushes/Bush.res" id="2_1s3x0"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1s3x0"]
+albedo_color = Color(0.0290165, 0.425687, 0, 1)
 
 [sub_resource type="SphereShape3D" id="1"]
 radius = 0.25
 
 [node name="Lingonberry" type="Node3D"]
 script = ExtResource("1_1")
+berry_offset_height = 0.9
 max_viable_altitude = 16.0
 blocking_radius = 2.0
 needs_free_radius = 2.5
@@ -15,18 +19,20 @@ required_neighbors = Array[String](["Pine"])
 neighbor_range = 8.0
 species_name = "Lingonberry"
 price = 5
-max_age = 4.0
+max_age = 8.0
 
 [node name="Model" type="Node3D" parent="."]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0, 0)
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
 cast_shadow = 0
-mesh = ExtResource("2_1")
+mesh = ExtResource("2_1s3x0")
+surface_material_override/0 = SubResource("StandardMaterial3D_1s3x0")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="."]
 collision_layer = 8
 collision_mask = 0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 0, 0.4, 0)
 shape = SubResource("1")

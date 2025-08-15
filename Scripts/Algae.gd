@@ -8,7 +8,7 @@ func _init():
 	# Initialize inherited properties at instantiation time (before _ready)
 	species_name = "Algae"
 	price = 1
-	max_age = 45.0
+	max_age = 4.0
 	# Keep neighbor pressure minimal so they can cluster on lakes
 	blocking_radius = 1.5
 	needs_free_radius = 1.5

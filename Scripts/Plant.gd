@@ -13,9 +13,6 @@ class_name Plant
 @export var forbidden_neighbors: Array[String] = []
 @export var neighbor_range: float = 5.0
 
-# Reproduction parameters (shared by all plants)
-@export var repro_interval_days: float = 0.5
-
 # Shared health update based on altitude
 func _update_health() -> void:
 	var current_altitude: float = global_position.y

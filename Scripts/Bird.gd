@@ -661,7 +661,7 @@ var _state_anim_choices: Dictionary = {
 	"descending_to_food": ["Fly"],
 	"ascending_to_altitude": ["Fly"],
 	"feeding": ["Eat"],
-	"resting": ["Idle"]
+	"resting": ["Idle_A"]
 }
 
 func _load_animations_from_dir(dir_path: String) -> void:

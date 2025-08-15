@@ -1,7 +1,7 @@
-[gd_resource type="StandardMaterial3D" format=3 uid="uid://dxsvlx11m2m8g"]
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://drjaqv7m1thgt"]
 
 [resource]
-resource_name = "bush_material"
-cull_mode = 2
-albedo_color = Color(0.298038, 0.54902, 0.290196, 1)
-roughness = 0.7
+resource_name = "AllColors_Material"
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.16831, 0.621236, 7.70092e-07, 1)
+emission_enabled = true

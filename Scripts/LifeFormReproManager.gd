@@ -33,6 +33,18 @@ func unregister_lifeform(lf: LifeForm) -> void:
 		if arr.is_empty():
 			_species_to_lifeforms.erase(key)
 
+func get_total_living(species_or_key: String) -> int:
+	# Public accessor for UI/managers: returns number of living individuals
+	# Accepts either display species name or normalized key; normalization removes spaces
+	var key := species_or_key.replace(" ", "")
+	var arr: Array = _species_to_lifeforms.get(key, [])
+	# Compact invalid references defensively
+	var alive: int = 0
+	for n in arr:
+		if is_instance_valid(n):
+			alive += 1
+	return alive
+
 func _to_species_key(lf: LifeForm) -> String:
 	# Normalize to UI/browser key by removing spaces.
 	return lf.species_name.replace(" ", "")

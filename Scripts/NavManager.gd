@@ -9,6 +9,12 @@ class_name NavManager
 @export var bird_region_enabled: bool = true
 @export var bird_region_height: float = 8.0
 
+# Optional underwater navigation layer for fish
+@export var fish_region_enabled: bool = true
+@export var fish_depth_offset: float = 1.0         # 1 unit below water level
+@export var fish_required_depth: float = 1.5       # only where terrain is at least this far below water level
+@export var fish_grid_resolution: int = 64         # sampling grid resolution for fish plane
+
 # NavigationMesh bake parameters (exposed for tuning)
 @export var cell_size: float = 0.25
 @export var cell_height: float = 0.25
@@ -28,8 +34,10 @@ class_name NavManager
 
 var region: NavigationRegion3D
 var bird_region: NavigationRegion3D
+var fish_region: NavigationRegion3D
 var _debug_mesh_instance: MeshInstance3D
 var _debug_visible: bool = false
+var _current_debug_nav: String = "mammal"
 
 # Editor/runtime button to rebake the navmesh
 var _rebake_now_backing: bool = false
@@ -65,6 +73,14 @@ func _ready():
 		bird_region.navigation_layers = 2
 		add_child(bird_region)
 
+	# Create optional underwater fish region
+	if fish_region_enabled:
+		fish_region = NavigationRegion3D.new()
+		fish_region.name = "FishNavRegion"
+		# Use a separate navigation layer so only fish use this region (bit 3 => value 4)
+		fish_region.navigation_layers = 4
+		add_child(fish_region)
+
 	if not Engine.is_editor_hint():
 		rebake_navmesh()
 		# Optional: build debug mesh (hidden by default)
@@ -85,7 +101,10 @@ func rebake_navmesh() -> void:
 		add_child(region)
 	region.navigation_mesh = navmesh
 	region.global_transform = Transform3D(Basis.IDENTITY, Vector3.ZERO)
-	print("NavManager: Navigation mesh rebaked")
+	var mammal_polys := 0
+	if navmesh and navmesh.has_method("get_polygon_count"):
+		mammal_polys = navmesh.get_polygon_count()
+	print("NavManager: Mammal navmesh rebaked (polygons: ", mammal_polys, ")")
 
 	# Assign the same mesh to the bird region but offset in Y
 	if bird_region_enabled:
@@ -96,6 +115,21 @@ func rebake_navmesh() -> void:
 			bird_region.navigation_layers = 2
 		bird_region.navigation_mesh = navmesh
 		bird_region.global_transform = Transform3D(Basis.IDENTITY, Vector3(0.0, bird_region_height, 0.0))
+
+	# Build dedicated flat fish mesh at water_level - fish_depth_offset over sufficiently deep terrain
+	if fish_region_enabled:
+		if fish_region == null:
+			fish_region = NavigationRegion3D.new()
+			fish_region.name = "FishNavRegion"
+			add_child(fish_region)
+			fish_region.navigation_layers = 4
+		var fish_nav := _build_fish_navmesh(terrain)
+		fish_region.navigation_mesh = fish_nav
+		fish_region.global_transform = Transform3D.IDENTITY
+		var fish_polys := 0
+		if fish_nav and fish_nav.has_method("get_polygon_count"):
+			fish_polys = fish_nav.get_polygon_count()
+		print("NavManager: Fish navmesh rebaked (polygons: ", fish_polys, ")")
 	_build_debug_mesh()
 	_set_debug_visible(_debug_visible)
 
@@ -155,21 +189,129 @@ func _build_navmesh_from_terrain(terrain: Node3D) -> NavigationMesh:
 	NavigationServer3D.bake_from_source_geometry_data(navmesh, src)
 	return navmesh
 
+func _build_fish_navmesh(terrain: Node3D) -> NavigationMesh:
+	var navmesh := NavigationMesh.new()
+	# Match parameters to main mesh for consistency
+	navmesh.agent_radius = agent_radius
+	navmesh.cell_size = cell_size
+	navmesh.cell_height = cell_height
+	navmesh.detail_sample_distance = detail_sample_distance
+	navmesh.detail_sample_max_error = detail_sample_max_error
+	navmesh.edge_max_error = edge_max_error
+	navmesh.edge_max_length = edge_max_length
+	navmesh.region_min_size = region_min_size
+	navmesh.region_merge_size = region_merge_size
+	navmesh.agent_max_climb = agent_max_climb
+	navmesh.agent_max_slope = agent_max_slope
+
+	# Build a flat grid mesh at y = water_level - fish_depth_offset
+	var wl := _get_water_level()
+	var target_y := wl - fish_depth_offset
+
+	# Determine terrain size extents
+	var size: float = 128.0
+	if terrain and terrain.has_method("get_size"):
+		size = terrain.get_size()
+	var half := size * 0.5
+
+	var res: int = max(8, fish_grid_resolution)
+	var step: float = size / float(res)
+
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+
+	# Simple unshaded material for debug if needed
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.2, 0.6, 1.0, 0.6)
+	st.set_material(mat)
+
+	var deep_enough := func(x: float, z: float) -> bool:
+		var th: float = target_y
+		if terrain and terrain.has_method("get_height"):
+			th = terrain.get_height(x, z)
+		return th <= (wl - fish_required_depth)
+
+	# Add quads as two triangles if sufficiently deep (center or all 4 corners)
+	var accepted_quads: int = 0
+	for iz in range(res):
+		var z0 := -half + iz * step
+		var z1 := z0 + step
+		for ix in range(res):
+			var x0 := -half + ix * step
+			var x1 := x0 + step
+			var ok00: bool = deep_enough.call(x0, z0)
+			var ok10: bool = deep_enough.call(x1, z0)
+			var ok11: bool = deep_enough.call(x1, z1)
+			var ok01: bool = deep_enough.call(x0, z1)
+			# Center sample as a relaxed criterion
+			var okC: bool = deep_enough.call((x0 + x1) * 0.5, (z0 + z1) * 0.5)
+			if (ok00 and ok10 and ok11 and ok01) or okC:
+				accepted_quads += 1
+				# tri 1: (x0,z0) (x1,z0) (x1,z1)
+				st.add_vertex(Vector3(x0, target_y, z0))
+				st.add_vertex(Vector3(x1, target_y, z0))
+				st.add_vertex(Vector3(x1, target_y, z1))
+				# tri 2: (x0,z0) (x1,z1) (x0,z1)
+				st.add_vertex(Vector3(x0, target_y, z0))
+				st.add_vertex(Vector3(x1, target_y, z1))
+				st.add_vertex(Vector3(x0, target_y, z1))
+
+	var mesh := st.commit()
+
+	var src := NavigationMeshSourceGeometryData3D.new()
+	src.add_mesh(mesh, Transform3D.IDENTITY)
+	# For synthetic meshes we add ourselves, skip scene parsing and bake directly
+	NavigationServer3D.bake_from_source_geometry_data(navmesh, src)
+	# Debug: report accepted tiles to help diagnose empty mesh
+	print("NavManager: Fish mesh tiles accepted: ", accepted_quads)
+	return navmesh
+
+func _get_water_level() -> float:
+	var root = get_tree().current_scene
+	if root:
+		var side = root.find_child("SidePanel", true, false)
+		if side and side.has_method("get"):
+			var v = side.get("water_level")
+			if typeof(v) == TYPE_FLOAT or typeof(v) == TYPE_INT:
+				return float(v)
+	return 0.0
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
-		# Toggle with N key
+		# N toggles mammal navmesh, M toggles fish navmesh
 		if (event.keycode == KEY_N):
-			_set_debug_visible(not _debug_visible)
+			_toggle_debug_for("mammal")
+		elif (event.keycode == KEY_M):
+			_toggle_debug_for("fish")
+
+func _toggle_debug_for(which: String) -> void:
+	if _debug_visible and _current_debug_nav == which:
+		_set_debug_visible(false)
+		return
+	_current_debug_nav = which
+	_build_debug_mesh()
+	_set_debug_visible(true)
 
 func _build_debug_mesh() -> void:
-	if not region or not region.navigation_mesh:
+	var navmesh: NavigationMesh = null
+	if _current_debug_nav == "mammal":
+		if region and region.navigation_mesh:
+			navmesh = region.navigation_mesh
+		else:
+			return
+	elif _current_debug_nav == "fish":
+		if fish_region and fish_region.navigation_mesh:
+			navmesh = fish_region.navigation_mesh
+		else:
+			return
+	else:
 		return
-	var navmesh: NavigationMesh = region.navigation_mesh
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_LINES)
 	# Red unshaded material
 	var mat := StandardMaterial3D.new()
-	mat.unshaded = true
+	#mat.unshaded = true
 	mat.albedo_color = Color(1, 0.1, 0.1, 1)
 	st.set_material(mat)
 	var verts: PackedVector3Array = []

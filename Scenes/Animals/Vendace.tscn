@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Fish.gd" id="1_h0"]
+
+[node name="Vendace" type="Node3D"]
+script = ExtResource("1_h0")
+swim_speed = 2.5
+vision_range = 20.0
+diet = Array[String](["Plankton"]) 
+animation_dir = "res://Resources/Animals/Herring/3D Files/GLTF/Animations/Single/"
+model_scene_path = "res://Resources/Animals/Herring/3D Files/GLTF/Merged LOD/Herring_LOD_All.glb"
+species_name = "Vendace"
+price = 10
+max_age = 5.0
+
+

@@ -104,7 +104,7 @@ light_energy = 0.5
 
 [node name="SidePanel" type="Panel" parent="UIRoot"]
 layout_direction = 2
-offset_right = 100.0
+offset_right = 120.0
 offset_bottom = 1025.0
 script = ExtResource("6_ua7ix")
 
@@ -139,6 +139,11 @@ text = "Mammals"
 custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 text = "Birds"
+
+[node name="FishButton" type="Button" parent="UIRoot/SidePanel/SideMenuBar/TypeSelectBar"]
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+text = "Fish"
 
 [node name="TopRightPanel" type="Panel" parent="UIRoot"]
 anchors_preset = 1
