@@ -11,8 +11,8 @@
 [ext_resource type="LabelSettings" uid="uid://duwgtl4gng6qq" path="res://Resources/LabelSettings/creditslabel.tres" id="8_pie87"]
 
 [sub_resource type="Gradient" id="Gradient_4qeqg"]
-offsets = PackedFloat32Array(0, 0.409836, 1)
-colors = PackedColorArray(0.859923, 0.694409, 0.233747, 1, 0.221041, 0.689688, 3.85046e-07, 1, 0.377919, 0.377919, 0.377919, 1)
+offsets = PackedFloat32Array(0.224771, 0.33945, 0.587156, 0.688073, 0.853211)
+colors = PackedColorArray(0.456298, 0.360537, 0.112856, 1, 0.0247797, 0.385653, 4.81308e-08, 1, 0.136057, 0.506002, 0, 1, 0.377919, 0.377919, 0.377919, 1, 0.899258, 0.899258, 0.899258, 1)
 
 [sub_resource type="GradientTexture1D" id="GradientTexture1D_77iun"]
 gradient = SubResource("Gradient_4qeqg")

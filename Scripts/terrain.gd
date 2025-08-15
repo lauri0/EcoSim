@@ -28,7 +28,7 @@ var static_body: StaticBody3D
 var collision_shape: CollisionShape3D
 
 func get_height(x: float, y: float) -> float:
-	return (noise.get_noise_2d(x, y) * height) + 5.0
+	return (noise.get_noise_2d(x, y) * height) + 4.0
 
 func get_normal(x: float, y: float) -> Vector3:
 	var epsilon := size / resolution

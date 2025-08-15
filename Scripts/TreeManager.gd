@@ -55,6 +55,8 @@ func can_spawn_plant_at(plant_scene: PackedScene, pos: Vector3) -> bool:
 	if not is_instance_valid(inst):
 		return false
 	var ok := true
+	# Special rule for water-surface plants: must be over underwater terrain
+	var is_water_surface: bool = false
 	# Altitude constraint (if the instance exposes min/max viable altitude)
 	var altitude: float = pos.y
 	if _terrain and _terrain.has_method("get_height"):
@@ -72,7 +74,22 @@ func can_spawn_plant_at(plant_scene: PackedScene, pos: Vector3) -> bool:
 		if typeof(vmax) == TYPE_FLOAT or typeof(vmax) == TYPE_INT:
 			has_max_alt = true
 			max_alt = float(vmax)
-	if ok and (has_min_alt or has_max_alt):
+	if inst and inst.has_method("is_water_surface_plant") and inst.is_water_surface_plant():
+		is_water_surface = true
+		# Determine water level from SidePanel if available; fallback 0.0
+		var wl: float = 0.0
+		var root = get_tree().current_scene
+		if root:
+			var side = root.find_child("SidePanel", true, false)
+			if side and side.has_method("get"):
+				var v = side.get("water_level")
+				if typeof(v) == TYPE_FLOAT or typeof(v) == TYPE_INT:
+					wl = float(v)
+		# Require terrain at XZ to be at or below water level
+		if altitude > wl:
+			ok = false
+	# Apply generic altitude constraints only for non-water plants
+	if ok and not is_water_surface and (has_min_alt or has_max_alt):
 		if (has_min_alt and altitude < min_alt) or (has_max_alt and altitude > max_alt):
 			ok = false
 	# Plants define spacing/neighbor constraints via exported properties
@@ -281,7 +298,19 @@ func request_smallplant_spawn(plant_name: String, pos: Vector3) -> void:
 	if is_instance_valid(_spawn_parent):
 		var inst = scene.instantiate()
 		_spawn_parent.add_child(inst)
-		inst.global_position = pos
+		# For water-surface plants, snap Y to water level
+		var spawn_p = pos
+		if inst and inst.has_method("is_water_surface_plant") and inst.is_water_surface_plant():
+			var wl: float = 0.0
+			var root = get_tree().current_scene
+			if root:
+				var side = root.find_child("SidePanel", true, false)
+				if side and side.has_method("get"):
+					var v = side.get("water_level")
+					if typeof(v) == TYPE_FLOAT or typeof(v) == TYPE_INT:
+						wl = float(v)
+			spawn_p.y = wl
+		inst.global_position = spawn_p
 
 func request_tree_spawn(species: String, pos: Vector3) -> void:
 	var scene = _get_tree_scene(species)

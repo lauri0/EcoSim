@@ -50,7 +50,7 @@ var birds_cache_warmed: bool = false
 
 # A hard‐coded list, or you could load these from your scenes folder
 var species_list = ["Birch","Pine","Rowan"]
-var plants_list = ["Grass", "Lingonberry"]
+var plants_list = ["Algae", "Grass", "Lingonberry"]
 var mammals_list = ["Hare", "Squirrel"]
 var birds_list = ["Crow"]
 
@@ -273,13 +273,27 @@ func _spawn_plant_at_mouse_position(mouse_pos: Vector2) -> void:
 	if intersection_point == Vector3.INF:
 		print("No terrain intersection found")
 		return
-	if intersection_point.y <= water_level:
-		print("Cannot spawn plant underwater! (terrain height: ", intersection_point.y, ", water level: ", water_level, ")")
-		return
+	# Decide if target is a water-surface plant
+	var scene2: PackedScene = load("res://Scenes/SmallPlants/" + selected_plant_species + ".tscn")
+	var is_water_surface: bool = false
+	if scene2:
+		var inst = scene2.instantiate()
+		if inst and inst.has_method("is_water_surface_plant") and inst.is_water_surface_plant():
+			is_water_surface = true
+		if inst:
+			inst.queue_free()
+	# Validate placement against water level depending on plant type
+	if is_water_surface:
+		if intersection_point.y > water_level:
+			print("Cannot spawn water-surface plant on dry ground (terrain height: ", intersection_point.y, ", water level: ", water_level, ")")
+			return
+	else:
+		if intersection_point.y <= water_level:
+			print("Cannot spawn plant underwater! (terrain height: ", intersection_point.y, ", water level: ", water_level, ")")
+			return
 	var tm2 = get_tree().current_scene.find_child("TreeManager", true, false)
-	if tm2:
-		var scene2 = load("res://Scenes/SmallPlants/" + selected_plant_species + ".tscn")
-		if scene2 and tm2.has_method("reserve_for_scene"):
+	if tm2 and scene2:
+		if tm2.has_method("reserve_for_scene"):
 			if not tm2.reserve_for_scene(scene2, intersection_point, 0.25):
 				print("Spawn spot temporarily reserved; try again")
 				return
@@ -435,8 +449,12 @@ func _spawn_plant(plant: String, spawn_position: Vector3) -> void:
 			trp2.add_species_expense((plant_instance as LifeForm).species_name, price, "plant")
 
 		terrain.get_parent().add_child(plant_instance)
-		var terrain_height = terrain.get_height(spawn_position.x, spawn_position.z)
-		spawn_position.y = terrain_height
+		# Place at terrain height for normal plants, or at water level for water-surface plants
+		if plant_instance and plant_instance.has_method("is_water_surface_plant") and plant_instance.is_water_surface_plant():
+			spawn_position.y = water_level
+		else:
+			var terrain_height = terrain.get_height(spawn_position.x, spawn_position.z)
+			spawn_position.y = terrain_height
 		plant_instance.global_position = spawn_position
 		var random_y_rotation = randf() * TAU
 		plant_instance.rotation.y = random_y_rotation

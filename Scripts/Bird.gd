@@ -144,20 +144,20 @@ class FeedingState:
 					t._destroy_attached_seed()
 					bird._award_seed_revenue(t)
 					bird._eaten_today += 1
-			# Berry from bush if available
+			# Berry from bush if available (recheck berry still exists)
 			elif bird.food_target is BerryBush and bird._bush_has_berry(bird.food_target):
 				var b: BerryBush = bird.food_target as BerryBush
 				b.consume_berry()
 				bird._award_berry_revenue(b)
 				bird._eaten_today += 1
-			# Other animals/birds
+			# Other animals/birds: award only if prey still valid right now
 			elif bird.food_target is Animal:
 				var a: Animal = bird.food_target as Animal
 				if is_instance_valid(a):
 					a.queue_free()
-				bird._reward_for_eating(a)
-				bird._eaten_today += 1
-			# Fallback: generic edible nodes (e.g., small plants)
+					bird._reward_for_eating(a)
+					bird._eaten_today += 1
+			# Fallback: generic edible nodes (e.g., small plants); only if still present
 			else:
 				if bird.food_target.has_method("consume"):
 					bird.food_target.consume()

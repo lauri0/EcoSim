@@ -190,13 +190,13 @@ class FeedingOnTreeState:
 		mammal._play_state_anim("feeding")
 		if mammal._feeding_timer > 0.0:
 			return
-		# Finished eating: if on a tree, destroy one seed and award revenue based on tree's seed_value
+		# Finished eating: if on a tree, only consume and award if the seed still exists
 		if is_instance_valid(mammal.food_target) and mammal.food_target is TreeBase:
 			var tree := mammal.food_target as TreeBase
-			if tree and tree.has_method("_destroy_attached_seed"):
+			if tree and mammal._tree_has_seed(tree) and tree.has_method("_destroy_attached_seed"):
 				tree._destroy_attached_seed()
 				mammal._award_seed_revenue(tree)
-			mammal._eaten_today += 1
+				mammal._eaten_today += 1
 		# After eating at the top, either look for more or rest on top
 		if mammal._has_met_daily_target():
 			mammal.switch_state("resting")

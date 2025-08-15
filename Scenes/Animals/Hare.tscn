@@ -9,6 +9,6 @@ swim_speed = 0.0
 vision_range = 30.0
 diet = Array[String](["Grass"])
 animation_dir = "res://Resources/Animals/Jackrabbit/3D Files/GLTF/Animations/Single/"
-species_name = "European Hare"
+species_name = "Hare"
 price = 25
 max_age = 6.0

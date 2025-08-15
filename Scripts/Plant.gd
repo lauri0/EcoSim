@@ -26,11 +26,6 @@ func _update_health() -> void:
 		healthPercentage = 0.0
 		return
 
-# Advance reproduction timer and fire events. Call from subclass logic tick.
-func _tick_reproduction(_dt: float, _seconds_per_game_day: float, _is_winter: bool) -> void:
-	# Natural/autonomous reproduction disabled. Reproduction is handled by LifeFormReproManager.
-	return
-
 # Default reproduction: ask manager to spawn same species near this plant
 func _try_reproduce() -> void:
 	if healthPercentage < 0.5:

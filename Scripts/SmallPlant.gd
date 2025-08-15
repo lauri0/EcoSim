@@ -52,9 +52,6 @@ func _logic_update(dt: float) -> void:
 	# Update health from environment
 	_update_health()
 
-	# Unified reproduction tick (implemented in Plant)
-	_tick_reproduction(dt, seconds_per_game_day, is_winter)
-
 func _remove_self() -> void:
 	queue_free()
 

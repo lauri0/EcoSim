@@ -16,7 +16,7 @@ enum TreeState {
 ## So a small tree intruding into teh needs_free_radius of a big tree won't affect the big tree's health much,
 ## but vice versa the small tree would be affected a lot
 @export var adult_size_factor:     float = 10.0
-
+	
 # Seed system properties
 @export var seed_spawn_point: Vector3 = Vector3(0, 4.0, 0)  # Base spawn point in local tree coordinates as multiple of scale
 @export var seed_type: String = "spherical"  # Will be overridden per species
