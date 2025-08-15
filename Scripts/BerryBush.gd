@@ -9,6 +9,7 @@ class_name BerryBush
 @export var berry_color: Color = Color(0.8, 0.0, 0.0)
 @export var berry_offset_height: float = 0.45
 @export var berry_interval_days: float = 0.75
+@export var berry_value: int = 2
 
 var _berry_timer: float = 0.0
 var _berry_node: MeshInstance3D
@@ -58,3 +59,11 @@ func _spawn_berry() -> void:
 	add_child(mi)
 	mi.transform = Transform3D(Basis.IDENTITY, Vector3(0.0, berry_offset_height, 0.0))
 	_berry_node = mi
+
+func consume_berry() -> void:
+	# Remove only the berry and reset timer; bush remains
+	if is_instance_valid(_berry_node):
+		_berry_node.queue_free()
+		_berry_node = null
+	# Start regen timer from zero
+	_berry_timer = 0.0

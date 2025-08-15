@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3 uid="uid://dbyiawtflwdls"]
+
+[ext_resource type="Script" uid="uid://bpyj72ihhk7vf" path="res://Scripts/Bird.gd" id="1_f1"]
+
+[node name="Crow" type="Node3D"]
+script = ExtResource("1_f1")
+flight_height = 8.0
+model_scene_path = "res://Resources/Animals/Crow/3D Files/GLTF/Merged LOD/Crow_LOD_All.glb"
+fly_speed = 2.8
+vision_range = 25.0
+diet = Array[String](["TreeSeed", "BerryBush"])
+animation_dir = "res://Resources/Animals/Crow/3D Files/GLTF/Animations/Single/"
+species_name = "Crow"
+price = 35
+max_age = 8.0

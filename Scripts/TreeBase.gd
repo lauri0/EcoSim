@@ -12,10 +12,6 @@ enum TreeState {
 ## Time (in-game days) that it takes for the tree to mature given 100% health
 @export var max_growth_progress:   float = 60.0
 
-## Time (in-game days) to produce a new seed at 100% health
-@export var ideal_seed_gen_interval:  float = 30.0
-## Time (in-game days) for the seeds to mature after they have spawned on the tree
-@export var ideal_seed_maturation_interval: float = 15.0
 ## Used to decide how much health damage intruding other trees deal to the tree
 ## So a small tree intruding into teh needs_free_radius of a big tree won't affect the big tree's health much,
 ## but vice versa the small tree would be affected a lot
@@ -111,7 +107,6 @@ static func _get_cached_autumn_material(species: String, autumn_color: Color, ba
 func _ready():
 	# Initialize tree
 	seconds_per_game_day = _get_seconds_per_game_day()
-	time_until_next_repro_check = ideal_seed_gen_interval * seconds_per_game_day
 	growth_progress = 0.0
 	state = TreeState.GROWING
 	# Stagger seasonal updates per tree to avoid frame spikes
@@ -188,13 +183,6 @@ func _logic_update(dt: float) -> void:
 	if _seed_accumulator >= _seed_update_interval:
 		_handle_seed_lifecycle(_seed_accumulator)
 		_seed_accumulator = 0.0
-
-	# Natural reproduction disabled; handled by LifeFormReproManager
-	# _tick_reproduction(dt, seconds_per_game_day, is_winter)
-	# time_until_next_repro_check -= dt
-	# if time_until_next_repro_check <= 0.0:
-	# 	_try_reproduce()
-	# 	time_until_next_repro_check = ideal_seed_gen_interval * seconds_per_game_day
 
 func _exit_tree():
 	if tree_manager and tree_manager.has_method("unregister_tree"):

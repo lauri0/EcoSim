@@ -9,8 +9,6 @@ height = 6.2
 radius = 0.4
 
 [node name="Aspen" instance=ExtResource("1_8qm6t")]
-ideal_seed_gen_interval = 18.0
-ideal_seed_maturation_interval = 18.0
 seed_spawn_point = Vector3(0, 4.5, 0)
 seed_size = 0.08
 seed_mass = 0.005

@@ -5,6 +5,10 @@ class_name NavManager
 @export var agent_radius: float = 0.25
 @export var agent_height: float = 0.6
 
+# Optional raised navigation layer for flying animals (e.g., birds)
+@export var bird_region_enabled: bool = true
+@export var bird_region_height: float = 8.0
+
 # NavigationMesh bake parameters (exposed for tuning)
 @export var cell_size: float = 0.25
 @export var cell_height: float = 0.25
@@ -23,6 +27,7 @@ class_name NavManager
 @export var parse_collision_layer: int = 1 << 2
 
 var region: NavigationRegion3D
+var bird_region: NavigationRegion3D
 var _debug_mesh_instance: MeshInstance3D
 var _debug_visible: bool = false
 
@@ -52,6 +57,14 @@ func _ready():
 	region.name = "MammalNavRegion"
 	add_child(region)
 
+	# Create optional raised bird region
+	if bird_region_enabled:
+		bird_region = NavigationRegion3D.new()
+		bird_region.name = "BirdNavRegion"
+		# Use a separate navigation layer so only birds use this region
+		bird_region.navigation_layers = 2
+		add_child(bird_region)
+
 	if not Engine.is_editor_hint():
 		rebake_navmesh()
 		# Optional: build debug mesh (hidden by default)
@@ -73,6 +86,16 @@ func rebake_navmesh() -> void:
 	region.navigation_mesh = navmesh
 	region.global_transform = Transform3D(Basis.IDENTITY, Vector3.ZERO)
 	print("NavManager: Navigation mesh rebaked")
+
+	# Assign the same mesh to the bird region but offset in Y
+	if bird_region_enabled:
+		if bird_region == null:
+			bird_region = NavigationRegion3D.new()
+			bird_region.name = "BirdNavRegion"
+			add_child(bird_region)
+			bird_region.navigation_layers = 2
+		bird_region.navigation_mesh = navmesh
+		bird_region.global_transform = Transform3D(Basis.IDENTITY, Vector3(0.0, bird_region_height, 0.0))
 	_build_debug_mesh()
 	_set_debug_visible(_debug_visible)
 

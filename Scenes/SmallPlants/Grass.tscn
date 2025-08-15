@@ -8,7 +8,6 @@ radius = 0.3
 
 [node name="Grass" type="Node3D"]
 script = ExtResource("1_7hfna")
-ideal_altitude = 5.0
 max_viable_altitude = 14.0
 blocking_radius = 2.0
 needs_free_radius = 2.0

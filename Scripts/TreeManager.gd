@@ -55,6 +55,26 @@ func can_spawn_plant_at(plant_scene: PackedScene, pos: Vector3) -> bool:
 	if not is_instance_valid(inst):
 		return false
 	var ok := true
+	# Altitude constraint (if the instance exposes min/max viable altitude)
+	var altitude: float = pos.y
+	if _terrain and _terrain.has_method("get_height"):
+		altitude = _terrain.get_height(pos.x, pos.z)
+	var has_min_alt := false
+	var has_max_alt := false
+	var min_alt: float = 0.0
+	var max_alt: float = 0.0
+	if inst and inst.has_method("get"):
+		var vmin = inst.get("min_viable_altitude")
+		if typeof(vmin) == TYPE_FLOAT or typeof(vmin) == TYPE_INT:
+			has_min_alt = true
+			min_alt = float(vmin)
+		var vmax = inst.get("max_viable_altitude")
+		if typeof(vmax) == TYPE_FLOAT or typeof(vmax) == TYPE_INT:
+			has_max_alt = true
+			max_alt = float(vmax)
+	if ok and (has_min_alt or has_max_alt):
+		if (has_min_alt and altitude < min_alt) or (has_max_alt and altitude > max_alt):
+			ok = false
 	# Plants define spacing/neighbor constraints via exported properties
 	var needs_free_radius: float = 0.0
 	var has_nfr: bool = false
@@ -273,6 +293,14 @@ func request_tree_spawn(species: String, pos: Vector3) -> void:
 		var inst = scene.instantiate()
 		_spawn_parent.add_child(inst)
 		inst.global_position = pos
+		# Force full growth on spawn for convenience testing
+		if inst is TreeBase:
+			var t := inst as TreeBase
+			t.growth_progress = t.max_growth_progress
+			t.state = t.TreeState.MATURE
+			t.state_percentage = 0.0
+			if t.has_method("_update_scale"):
+				t._update_scale()
 
 # Spawn reservations
 func reserve_for_scene(plant_scene: PackedScene, pos: Vector3, ttl: float = 1.0) -> bool:

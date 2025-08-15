@@ -135,6 +135,11 @@ custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 text = "Mammals"
 
+[node name="BirdsButton" type="Button" parent="UIRoot/SidePanel/SideMenuBar/TypeSelectBar"]
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+text = "Birds"
+
 [node name="TopRightPanel" type="Panel" parent="UIRoot"]
 anchors_preset = 1
 anchor_left = 1.0

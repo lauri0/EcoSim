@@ -7,7 +7,6 @@ radius = 0.25
 
 [node name="BerryBush" type="Node3D"]
 script = ExtResource("1_1")
-ideal_altitude = 6.0
 max_viable_altitude = 16.0
 blocking_radius = 2.0
 needs_free_radius = 2.5

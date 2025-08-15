@@ -9,12 +9,10 @@
 height = 4.8
 
 [node name="Alder" instance=ExtResource("1_m2uyi")]
-ideal_seed_gen_interval = 15.0
 seed_spawn_point = Vector3(0, 5.7, 0)
 seed_type = "ovoid"
 seed_size = 0.08
 seed_mass = 0.005
-ideal_altitude = 3.0
 min_viable_altitude = 0.1
 max_viable_altitude = 10.0
 max_age = 520.0

@@ -3,6 +3,7 @@ extends Panel
 @onready var trees_button: Button = $SideMenuBar/TypeSelectBar/TreesButton
 @onready var plants_button: Button = $SideMenuBar/TypeSelectBar/PlantsButton if has_node("SideMenuBar/TypeSelectBar/PlantsButton") else null
 @onready var mammals_button: Button = $SideMenuBar/TypeSelectBar/MammalsButton if has_node("SideMenuBar/TypeSelectBar/MammalsButton") else null
+@onready var birds_button: Button = $SideMenuBar/TypeSelectBar/BirdsButton if has_node("SideMenuBar/TypeSelectBar/BirdsButton") else null
 # Optional label to show selected species (lives under BottomPanel)
 @onready var selected_label: Label = (
 	get_node("../BottomPanel/BottomMenuBar/SelectedLabel") as Label
@@ -14,6 +15,7 @@ var tree_info_label: RichTextLabel
 var currently_inspected_tree: TreeBase
 var currently_inspected_plant: SmallPlant
 var currently_inspected_mammal: Mammal
+var currently_inspected_bird: Bird
 var popup_update_timer: Timer
 
 # Tree species selection popup
@@ -31,6 +33,10 @@ var plants_selection_vbox: VBoxContainer
 var mammals_selection_popup: PopupPanel
 var mammals_selection_vbox: VBoxContainer
 
+# Birds species selection popup
+var birds_selection_popup: PopupPanel
+var birds_selection_vbox: VBoxContainer
+
 # Cached per-species info to avoid instantiating scenes on every open
 var species_info_cache: Dictionary = {}
 var species_cache_warmed: bool = false
@@ -38,12 +44,15 @@ var plants_info_cache: Dictionary = {}
 var plants_cache_warmed: bool = false
 var mammals_info_cache: Dictionary = {}
 var mammals_cache_warmed: bool = false
+var birds_info_cache: Dictionary = {}
+var birds_cache_warmed: bool = false
 
 
 # A hard‐coded list, or you could load these from your scenes folder
 var species_list = ["Birch","Pine","Rowan"]
 var plants_list = ["Grass", "Lingonberry"]
-var mammals_list = ["European Hare", "Squirrel"]
+var mammals_list = ["Hare", "Squirrel"]
+var birds_list = ["Crow"]
 
 # Tree spawning state
 var selected_tree_species: String = ""
@@ -56,6 +65,10 @@ var is_plant_spawn_mode: bool = false
 # Mammal spawning state
 var selected_mammal_species: String = ""
 var is_mammal_spawn_mode: bool = false
+
+# Bird spawning state
+var selected_bird_species: String = ""
+var is_bird_spawn_mode: bool = false
 
 # References to world objects (set from world scene)
 var camera: Camera3D
@@ -72,6 +85,8 @@ func _ready():
 		plants_button.pressed.connect(_on_plants_button_pressed)
 	if mammals_button:
 		mammals_button.pressed.connect(_on_mammals_button_pressed)
+	if birds_button:
+		birds_button.pressed.connect(_on_birds_button_pressed)
 
 	# World references and UI setup
 	_find_world_references()
@@ -80,10 +95,12 @@ func _ready():
 	_create_species_selection_popup.call_deferred()
 	_create_plants_selection_popup.call_deferred()
 	_create_mammals_selection_popup.call_deferred()
+	_create_birds_selection_popup.call_deferred()
 	# Warm the species info cache in the background to make browser instant
 	_warm_species_cache.call_deferred()
 	_warm_plants_cache.call_deferred()
 	_warm_mammals_cache.call_deferred()
+	_warm_birds_cache.call_deferred()
 
 func _warm_species_cache():
 	for species_name in species_list:
@@ -103,27 +120,29 @@ func _warm_mammals_cache():
 			mammals_info_cache[mammal_name] = _load_mammal_info(mammal_name)
 	mammals_cache_warmed = true
 
+func _warm_birds_cache():
+	for bird_name in birds_list:
+		if not birds_info_cache.has(bird_name):
+			birds_info_cache[bird_name] = _load_bird_info(bird_name)
+	birds_cache_warmed = true
+
 func _load_species_info(species_name: String) -> Dictionary:
 	var tree_scene_path = "res://Scenes/Trees/" + species_name + ".tscn"
 	var tree_scene: PackedScene = load(tree_scene_path)
 	if not tree_scene:
-		return {"name": species_name, "ideal": 0.0, "maturity_days": 0.0, "seed_type": "?", "lifespan_days": 0.0, "price": 0, "germ_chance": 0.0, "seed_cycle_days": 0.0, "min_alt": 0.0, "max_alt": 0.0}
+		return {"name": species_name, "maturity_days": 0.0, "seed_type": "?", "lifespan_days": 0.0, "price": 0, "min_alt": 0.0, "max_alt": 0.0}
 	var tree_instance = tree_scene.instantiate()
 	if not tree_instance or not tree_instance is TreeBase:
 		if tree_instance:
 			tree_instance.queue_free()
-		return {"name": species_name, "ideal": 0.0, "maturity_days": 0.0, "seed_type": "?", "lifespan_days": 0.0, "price": 0, "germ_chance": 0.0, "seed_cycle_days": 0.0, "min_alt": 0.0, "max_alt": 0.0}
+		return {"name": species_name, "maturity_days": 0.0, "seed_type": "?", "lifespan_days": 0.0, "price": 0, "min_alt": 0.0, "max_alt": 0.0}
 	var tree = tree_instance as TreeBase
-	var seed_cycle_days: float = tree.ideal_seed_gen_interval + tree.ideal_seed_maturation_interval
 	var info := {
 		"name": species_name,
-		"ideal": tree.ideal_altitude,
 		"maturity_days": tree.max_growth_progress,
 		"seed_type": tree.seed_type,
 		"lifespan_days": (tree as LifeForm).max_age,
 		"price": (tree as LifeForm).price,
-		"germ_chance": tree.seed_germ_chance,
-		"seed_cycle_days": seed_cycle_days,
 		"min_alt": tree.min_viable_altitude,
 		"max_alt": tree.max_viable_altitude
 	}
@@ -134,22 +153,19 @@ func _load_smallplant_info(plant_name: String) -> Dictionary:
 	var plant_scene_path = "res://Scenes/SmallPlants/" + plant_name + ".tscn"
 	var plant_scene: PackedScene = load(plant_scene_path)
 	if not plant_scene:
-		return {"name": plant_name, "ideal": 0.0, "maturity_days": 0.0, "seed_type": "-", "lifespan_days": 0.0, "price": 0, "germ_chance": 0.0, "seed_cycle_days": 0.0, "min_alt": 0.0, "max_alt": 0.0}
+		return {"name": plant_name, "maturity_days": 0.0, "seed_type": "-", "lifespan_days": 0.0, "price": 0, "min_alt": 0.0, "max_alt": 0.0}
 	var plant_instance = plant_scene.instantiate()
 	if not plant_instance or not plant_instance is SmallPlant:
 		if plant_instance:
 			plant_instance.queue_free()
-		return {"name": plant_name, "ideal": 0.0, "maturity_days": 0.0, "seed_type": "-", "lifespan_days": 0.0, "price": 0, "germ_chance": 0.0, "seed_cycle_days": 0.0, "min_alt": 0.0, "max_alt": 0.0}
+		return {"name": plant_name, "maturity_days": 0.0, "seed_type": "-", "lifespan_days": 0.0, "price": 0, "min_alt": 0.0, "max_alt": 0.0}
 	var plant = plant_instance as SmallPlant
 	var info2 := {
 		"name": plant_name,
-		"ideal": plant.ideal_altitude,
 		"maturity_days": 0.0,
 		"seed_type": "-",
 		"lifespan_days": (plant as LifeForm).max_age,
 		"price": (plant as LifeForm).price,
-		"germ_chance": 0.0,
-		"seed_cycle_days": 0.0,
 		"min_alt": plant.min_viable_altitude,
 		"max_alt": plant.max_viable_altitude
 	}
@@ -177,6 +193,9 @@ func _on_plants_button_pressed() -> void:
 func _on_mammals_button_pressed() -> void:
 	_show_mammals_browser()
 
+func _on_birds_button_pressed() -> void:
+	_show_birds_browser()
+
 ## Deprecated: selection through PopupMenu removed
 
 
@@ -190,6 +209,8 @@ func _input(event: InputEvent) -> void:
 			_spawn_plant_at_mouse_position(event.position)
 		elif is_mammal_spawn_mode and selected_mammal_species != "":
 			_spawn_mammal_at_mouse_position(event.position)
+		elif is_bird_spawn_mode and selected_bird_species != "":
+			_spawn_bird_at_mouse_position(event.position)
 		else:
 			_try_inspect_entity_at_mouse_position(event.position)
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
@@ -205,6 +226,8 @@ func _input(event: InputEvent) -> void:
 			plants_selection_popup.hide()
 		if mammals_selection_popup and mammals_selection_popup.visible:
 			mammals_selection_popup.hide()
+		if birds_selection_popup and birds_selection_popup.visible:
+			birds_selection_popup.hide()
 	elif event is InputEventKey and event.pressed and not event.echo:
 		# Performance test: spawn 500 birch trees at random locations when pressing '0'
 		if event.keycode == KEY_0:
@@ -231,7 +254,7 @@ func _spawn_tree_at_mouse_position(mouse_pos: Vector2) -> void:
 	if tm:
 		var scene = load("res://Scenes/Trees/" + selected_tree_species + ".tscn")
 		if scene and tm.has_method("reserve_for_scene"):
-			# Allow immediate subsequent spawn into the same spot by tagging reservation to that exact position
+			# Disallow immediate subsequent spawn into the same spot by tagging reservation to that exact position
 			if not tm.reserve_for_scene(scene, intersection_point, 0.25):
 				print("Spawn spot temporarily reserved; try again")
 				return
@@ -286,6 +309,31 @@ func _spawn_mammal_at_mouse_position(mouse_pos: Vector2) -> void:
 				print("Spawn spot temporarily reserved; try again")
 				return
 	_spawn_mammal(selected_mammal_species, intersection_point)
+
+func _spawn_bird_at_mouse_position(mouse_pos: Vector2) -> void:
+	if not camera or not terrain:
+		print("Camera or terrain reference not set!")
+		return
+	var from = camera.project_ray_origin(mouse_pos)
+	var ray_dir = camera.project_ray_normal(mouse_pos)
+	if ray_dir.y >= 0:
+		print("Ray pointing upward, can't hit terrain")
+		return
+	var intersection_point = _find_terrain_intersection(from, ray_dir)
+	if intersection_point == Vector3.INF:
+		print("No terrain intersection found")
+		return
+	if intersection_point.y <= water_level:
+		print("Cannot spawn bird underwater! (terrain height: ", intersection_point.y, ", water level: ", water_level, ")")
+		return
+	var tm = get_tree().current_scene.find_child("TreeManager", true, false)
+	if tm:
+		var scene = load("res://Scenes/Animals/" + selected_bird_species + ".tscn")
+		if scene and tm.has_method("reserve_for_scene"):
+			if not tm.reserve_for_scene(scene, intersection_point, 0.25):
+				print("Spawn spot temporarily reserved; try again")
+				return
+	_spawn_bird(selected_bird_species, intersection_point)
 
 func _find_terrain_intersection(ray_origin: Vector3, ray_direction: Vector3) -> Vector3:
 	var terrain_size = 256.0
@@ -349,6 +397,14 @@ func _spawn_tree(species: String, spawn_position: Vector3) -> void:
 		tree_instance.global_position = spawn_position
 		var random_y_rotation = randf() * TAU
 		tree_instance.rotation.y = random_y_rotation
+		# Force full growth on spawn for convenience testing
+		if tree_instance is TreeBase:
+			var t := tree_instance as TreeBase
+			t.growth_progress = t.max_growth_progress
+			t.state = t.TreeState.MATURE
+			t.state_percentage = 0.0
+			if t.has_method("_update_scale"):
+				t._update_scale()
 		print("Spawned ", species, " tree at position: ", spawn_position)
 	else:
 		print("Failed to load tree scene: ", tree_scene_path)
@@ -422,6 +478,42 @@ func _spawn_mammal(species: String, spawn_position: Vector3) -> void:
 	else:
 		print("Failed to load mammal scene: ", scene_path)
 
+func _spawn_bird(species: String, spawn_position: Vector3) -> void:
+	var scene_path = "res://Scenes/Animals/" + species + ".tscn"
+	var scene = load(scene_path)
+	if scene:
+		var tm = get_tree().current_scene.find_child("TreeManager", true, false)
+		if tm and tm.has_method("can_spawn_plant_at"):
+			if not tm.can_spawn_plant_at(scene, spawn_position):
+				return
+		var inst = scene.instantiate()
+		var price: int = 0
+		if inst is LifeForm:
+			price = _compute_dynamic_spawn_cost(inst as LifeForm)
+		if top_right_panel and top_right_panel.has_method("try_spend"):
+			if not top_right_panel.try_spend(price):
+				print("Not enough credits to spawn ", species, " (cost: ", price, ")")
+				if inst:
+					inst.queue_free()
+				return
+		if top_right_panel and top_right_panel.has_method("add_species_expense") and inst is LifeForm:
+			top_right_panel.add_species_expense((inst as LifeForm).species_name, price, "animal")
+		terrain.get_parent().add_child(inst)
+		var terrain_height = terrain.get_height(spawn_position.x, spawn_position.z)
+		# Spawn in the air at the bird's flight height above ground
+		var flight_h: float = 6.0
+		if inst and inst.has_method("get"):
+			var fh = inst.get("flight_height")
+			if typeof(fh) == TYPE_FLOAT or typeof(fh) == TYPE_INT:
+				flight_h = float(fh)
+		spawn_position.y = terrain_height + flight_h
+		inst.global_position = spawn_position
+		var random_y_rotation = randf() * TAU
+		inst.rotation.y = random_y_rotation
+		print("Spawned ", species, " at position: ", spawn_position)
+	else:
+		print("Failed to load bird scene: ", scene_path)
+
 func _spawn_tree_no_cost(species: String, spawn_position: Vector3) -> void:
 	var tree_scene_path = "res://Scenes/Trees/" + species + ".tscn"
 	var tree_scene = load(tree_scene_path)
@@ -474,6 +566,8 @@ func _clear_all_selections():
 	selected_plant_species = ""
 	is_mammal_spawn_mode = false
 	selected_mammal_species = ""
+	is_bird_spawn_mode = false
+	selected_bird_species = ""
 	_update_selected_display()
 
 func _update_selected_display():
@@ -637,6 +731,45 @@ func _create_mammals_selection_popup():
 
 	_rebuild_mammals_browser_entries()
 
+func _create_birds_selection_popup():
+	birds_selection_popup = PopupPanel.new()
+	birds_selection_popup.size = Vector2(560, 740)
+	birds_selection_popup.set_flag(Window.FLAG_RESIZE_DISABLED, true)
+	birds_selection_popup.exclusive = false
+
+	var root_vbox = VBoxContainer.new()
+	root_vbox.size = Vector2(540, 720)
+	root_vbox.position = Vector2(10, 10)
+	birds_selection_popup.add_child(root_vbox)
+
+	var title_label = Label.new()
+	title_label.text = "Birds"
+	title_label.add_theme_font_size_override("font_size", 18)
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root_vbox.add_child(title_label)
+
+	var scroll = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(540, 680)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	root_vbox.add_child(scroll)
+
+	birds_selection_popup.window_input.connect(_on_popup_gui_input)
+	scroll.gui_input.connect(_on_popup_gui_input)
+
+	var list_vbox = VBoxContainer.new()
+	list_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list_vbox)
+
+	birds_selection_vbox = list_vbox
+
+	var ui_root = get_parent()
+	if ui_root:
+		ui_root.add_child(birds_selection_popup)
+	else:
+		get_tree().current_scene.add_child(birds_selection_popup)
+
+	_rebuild_birds_browser_entries()
+
 ## Detailed formatter kept for future but not used by browser
 
 func _format_species_info_compact(species_name: String) -> String:
@@ -650,8 +783,7 @@ func _format_species_info_compact(species_name: String) -> String:
 		return "[b]%s[/b]\n[color=red]Error: Invalid tree data[/color]" % species_name
 	var tree = tree_instance as TreeBase
 	var info = "[b]%s[/b]\n" % species_name
-	info += "Ideal: %.1fm | Growth: %.1fy | Seeds: %s" % [
-		tree.ideal_altitude,
+	info += "Growth: %.1fy | Seeds: %s" % [
 		tree.max_growth_progress / 60.0,
 		tree.seed_type
 	]
@@ -697,6 +829,18 @@ func _show_mammals_browser():
 	_rebuild_mammals_browser_entries()
 	mammals_selection_popup.position = popup_pos
 	mammals_selection_popup.popup()
+
+func _show_birds_browser():
+	if not birds_selection_popup:
+		return
+	var btn_rect = birds_button.get_global_rect() if birds_button else trees_button.get_global_rect()
+	var popup_pos = Vector2(btn_rect.position.x + btn_rect.size.x + 8, btn_rect.position.y)
+	var screen_size = get_viewport().get_visible_rect().size
+	if popup_pos.x + birds_selection_popup.size.x > screen_size.x:
+		popup_pos.x = max(0.0, btn_rect.position.x - birds_selection_popup.size.x - 8)
+	_rebuild_birds_browser_entries()
+	birds_selection_popup.position = popup_pos
+	birds_selection_popup.popup()
 
 func _rebuild_species_browser_entries():
 	if not species_selection_vbox:
@@ -787,6 +931,39 @@ func _compact_info_text_for_mammal(mammal_name: String) -> String:
 	lines.append("Diet: " + ", ".join(diet))
 	return "\n".join(lines)
 
+func _compact_info_text_for_bird(bird_name: String) -> String:
+	if not birds_info_cache.has(bird_name):
+		birds_info_cache[bird_name] = _load_bird_info(bird_name)
+	var info: Dictionary = birds_info_cache[bird_name]
+	var species: String = info.get("name", bird_name)
+	var price: int = info.get("price", 0)
+	var lifespan_days: float = info.get("lifespan_days", 0.0)
+	var fly_speed: float = info.get("fly_speed", 0.0)
+	var sleep: float = info.get("sleep", 0.0)
+	var wake: float = info.get("wake", 0.0)
+	var vision: float = info.get("vision", 0.0)
+	var diet: Array = info.get("diet", [])
+	var flight_height: float = info.get("flight_height", 0.0)
+
+	var tm = get_tree().current_scene.find_child("TreeManager", true, false)
+	var total_living := 0
+	var repro_per_day := 0.0
+	var eating_target := 1
+	if tm:
+		if tm.has_method("get_total_living"):
+			total_living = tm.get_total_living(species)
+		if tm.has_method("get_reproduction"):
+			repro_per_day = tm.get_reproduction(species)
+		if tm.has_method("get_eating_target"):
+			eating_target = tm.get_eating_target(species)
+	var spawn_cost: int = price * (total_living + 1)
+	var lines: Array[String] = []
+	lines.append("Cost: %dCr | Total living: %d (+%.0f/day | eat x%d/day)" % [spawn_cost, total_living, repro_per_day, eating_target])
+	lines.append("Lifespan: %s | Fly speed: %.1f m/s | Cruise: %.1fm" % [_format_days(lifespan_days), fly_speed, flight_height])
+	lines.append("Daily cycle: sleeps at %.0f:00, wakes at %.0f:00 | Vision: %.0fm" % [sleep, wake, vision])
+	lines.append("Diet: " + ", ".join(diet))
+	return "\n".join(lines)
+
 func _load_mammal_info(mammal_name: String) -> Dictionary:
 	var path = "res://Scenes/Animals/" + mammal_name + ".tscn"
 	var scene: PackedScene = load(path)
@@ -813,6 +990,39 @@ func _load_mammal_info(mammal_name: String) -> Dictionary:
 		var d = inst.get("diet")
 		if typeof(d) == TYPE_ARRAY:
 			info["diet"] = d
+	if inst:
+		inst.queue_free()
+	return info
+
+func _load_bird_info(bird_name: String) -> Dictionary:
+	var path = "res://Scenes/Animals/" + bird_name + ".tscn"
+	var scene: PackedScene = load(path)
+	if not scene:
+		return {"name": bird_name, "price": 0, "lifespan_days": 0.0, "fly_speed": 0.0, "sleep": 0.0, "wake": 0.0, "vision": 0.0, "diet": [], "flight_height": 0.0}
+	var inst = scene.instantiate()
+	var info := {"name": bird_name, "price": 0, "lifespan_days": 0.0, "fly_speed": 0.0, "sleep": 0.0, "wake": 0.0, "vision": 0.0, "diet": [], "flight_height": 0.0}
+	if inst and inst is LifeForm:
+		info["price"] = (inst as LifeForm).price
+		info["lifespan_days"] = (inst as LifeForm).max_age
+	if inst and inst.has_method("get"):
+		var fs = inst.get("fly_speed")
+		if typeof(fs) == TYPE_FLOAT or typeof(fs) == TYPE_INT:
+			info["fly_speed"] = float(fs)
+		var st = inst.get("sleep_time")
+		if typeof(st) == TYPE_FLOAT or typeof(st) == TYPE_INT:
+			info["sleep"] = float(st)
+		var wh = inst.get("wake_hour")
+		if typeof(wh) == TYPE_FLOAT or typeof(wh) == TYPE_INT:
+			info["wake"] = float(wh)
+		var vr = inst.get("vision_range")
+		if typeof(vr) == TYPE_FLOAT or typeof(vr) == TYPE_INT:
+			info["vision"] = float(vr)
+		var d = inst.get("diet")
+		if typeof(d) == TYPE_ARRAY:
+			info["diet"] = d
+		var fh = inst.get("flight_height")
+		if typeof(fh) == TYPE_FLOAT or typeof(fh) == TYPE_INT:
+			info["flight_height"] = float(fh)
 	if inst:
 		inst.queue_free()
 	return info
@@ -929,6 +1139,65 @@ func _rebuild_mammals_browser_entries():
 		sep.modulate = Color(1,1,1,0.25)
 		mammals_selection_vbox.add_child(sep)
 
+func _rebuild_birds_browser_entries():
+	if not birds_selection_vbox:
+		return
+	for child in birds_selection_vbox.get_children():
+		birds_selection_vbox.remove_child(child)
+		child.queue_free()
+	for bird_name in birds_list:
+		var row = HBoxContainer.new()
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.custom_minimum_size = Vector2(520, 54)
+		row.add_theme_constant_override("separation", 12)
+
+		var texts_box = VBoxContainer.new()
+		texts_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		texts_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+
+		var name_label = Label.new()
+		name_label.text = bird_name
+		name_label.add_theme_font_size_override("font_size", 16)
+		texts_box.add_child(name_label)
+
+		var info_label = Label.new()
+		info_label.text = _compact_info_text_for_bird(bird_name)
+		info_label.add_theme_font_size_override("font_size", 12)
+		info_label.modulate = Color(0.9, 0.9, 0.9)
+		texts_box.add_child(info_label)
+
+		row.add_child(texts_box)
+
+		var buttons_box = VBoxContainer.new()
+		buttons_box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var spawn_button = Button.new()
+		spawn_button.text = "Spawn"
+		spawn_button.custom_minimum_size = Vector2(110, 26)
+		spawn_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		spawn_button.pressed.connect(_on_bird_spawn_button_pressed.bind(bird_name))
+		buttons_box.add_child(spawn_button)
+
+		var repro_button = Button.new()
+		repro_button.text = "+1 Reproduction"
+		repro_button.custom_minimum_size = Vector2(110, 24)
+		repro_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		repro_button.pressed.connect(_on_add_reproduction_pressed.bind(bird_name))
+		buttons_box.add_child(repro_button)
+
+		var eating_button = Button.new()
+		eating_button.text = "+1 Eating"
+		eating_button.custom_minimum_size = Vector2(110, 24)
+		eating_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		eating_button.pressed.connect(_on_add_eating_pressed.bind(bird_name))
+		buttons_box.add_child(eating_button)
+
+		row.add_child(buttons_box)
+
+		birds_selection_vbox.add_child(row)
+		var sep = HSeparator.new()
+		sep.modulate = Color(1,1,1,0.25)
+		birds_selection_vbox.add_child(sep)
+
 func _compact_info_text(species_name: String) -> String:
 	if not species_info_cache.has(species_name):
 		# Load on-demand if cache not ready
@@ -938,7 +1207,6 @@ func _compact_info_text(species_name: String) -> String:
 	var price: int = info.get("price", 0)
 	var lifespan_days: float = info.get("lifespan_days", 0.0)
 	var maturity_days: float = info.get("maturity_days", 0.0)
-	var ideal: float = info.get("ideal", 0.0)
 	var min_alt: float = info.get("min_alt", 0.0)
 	var max_alt: float = info.get("max_alt", 0.0)
 	var _seed_cycle_days: float = info.get("seed_cycle_days", 0.0)
@@ -961,7 +1229,6 @@ func _compact_info_text(species_name: String) -> String:
 	lines.append("Lifespan: %s | Maturity at: %s" % [_format_days(lifespan_days), _format_days(maturity_days)])
 	# Reproduction parameters (shared via Plant)
 	var repro_radius := 0.0
-	var repro_interval_days := 0.0
 	var tree_scene_path = "res://Scenes/Trees/" + species_name + ".tscn"
 	var tree_scene: PackedScene = load(tree_scene_path)
 	if tree_scene:
@@ -970,12 +1237,9 @@ func _compact_info_text(species_name: String) -> String:
 			var rr = inst.get("repro_radius")
 			if typeof(rr) == TYPE_FLOAT or typeof(rr) == TYPE_INT:
 				repro_radius = float(rr)
-			var ri = inst.get("repro_interval_days")
-			if typeof(ri) == TYPE_FLOAT or typeof(ri) == TYPE_INT:
-				repro_interval_days = float(ri)
 		inst.queue_free()
-	lines.append("Reproduction: radius %.1fm | interval %s" % [repro_radius, _format_days(repro_interval_days)])
-	lines.append("Altitude range: %.1fm - %.1fm (Ideal is %.1fm)" % [min_alt, max_alt, ideal])
+	lines.append("Reproduction: radius %.1fm" % [repro_radius])
+	lines.append("Altitude range: %.1fm - %.1fm" % [min_alt, max_alt])
 	# Seed info removed from UI due to new global reproduction system
 	return "\n".join(lines)
 
@@ -986,7 +1250,6 @@ func _compact_info_text_for_plant(plant_name: String) -> String:
 	var species: String = info.get("name", plant_name)
 	var price: int = info.get("price", 0)
 	var lifespan_days: float = info.get("lifespan_days", 0.0)
-	var ideal: float = info.get("ideal", 0.0)
 	var min_alt: float = info.get("min_alt", 0.0)
 	var max_alt: float = info.get("max_alt", 0.0)
 
@@ -1020,7 +1283,7 @@ func _compact_info_text_for_plant(plant_name: String) -> String:
 				repro_interval_days = float(ri)
 		inst.queue_free()
 	lines.append("Reproduction: radius %.1fm | interval %s" % [repro_radius, _format_days(repro_interval_days)])
-	lines.append("Altitude range: %.1fm - %.1fm (Ideal is %.1fm)" % [min_alt, max_alt, ideal])
+	lines.append("Altitude range: %.1fm - %.1fm" % [min_alt, max_alt])
 	return "\n".join(lines)
 
 func _on_add_reproduction_pressed(species_or_plant: String) -> void:
@@ -1083,6 +1346,8 @@ func _on_popup_gui_input(event: InputEvent) -> void:
 			plants_selection_popup.hide()
 		if mammals_selection_popup and mammals_selection_popup.visible:
 			mammals_selection_popup.hide()
+		if birds_selection_popup and birds_selection_popup.visible:
+			birds_selection_popup.hide()
 		accept_event()
 
 func _format_days(days: float) -> String:
@@ -1122,6 +1387,18 @@ func _on_mammal_spawn_button_pressed(mammal_name: String):
 	_update_selected_display()
 	if mammals_selection_popup and mammals_selection_popup.visible:
 		mammals_selection_popup.hide()
+	if species_selection_popup and species_selection_popup.visible:
+		species_selection_popup.hide()
+	if plants_selection_popup and plants_selection_popup.visible:
+		plants_selection_popup.hide()
+
+func _on_bird_spawn_button_pressed(bird_name: String):
+	_clear_all_selections()
+	selected_bird_species = bird_name
+	is_bird_spawn_mode = true
+	_update_selected_display()
+	if birds_selection_popup and birds_selection_popup.visible:
+		birds_selection_popup.hide()
 	if species_selection_popup and species_selection_popup.visible:
 		species_selection_popup.hide()
 	if plants_selection_popup and plants_selection_popup.visible:
@@ -1199,6 +1476,10 @@ func _try_inspect_entity_at_mouse_position(mouse_pos: Vector2):
 		var mammal = _find_mammal_in_hierarchy(clicked_node)
 		if mammal:
 			_show_mammal_info(mammal, mouse_pos)
+			return
+		var bird = _find_bird_in_hierarchy(clicked_node)
+		if bird:
+			_show_bird_info(bird, mouse_pos)
 
 func _find_tree_base_in_hierarchy(node: Node) -> TreeBase:
 	if node is TreeBase:
@@ -1230,21 +1511,42 @@ func _find_mammal_in_hierarchy(node: Node) -> Mammal:
 		current = current.get_parent()
 	return null
 
+func _find_bird_in_hierarchy(node: Node) -> Bird:
+	if node is Bird:
+		return node as Bird
+	var current = node
+	while current:
+		if current is Bird:
+			return current as Bird
+		current = current.get_parent()
+	return null
+
 func _format_mammal_info(m: Mammal) -> String:
 	var age_text = "%.1f / %.1f days" % [m.current_age, m.max_age]
 	var health_text = "%.1f%%" % (m.healthPercentage * 100.0)
 	var info = "[b]%s[/b]\n\n" % m.species_name
 	info += "[b]Age:[/b] %s\n" % age_text
 	info += "[b]Health:[/b] %s\n" % health_text
-	var mstate_caps := "UNKNOWN"
 	var mstate_nice := "Unknown"
-	if m.has_method("get_state_name"):
-		mstate_caps = m.get_state_name()
 	if m.has_method("get_state_display_name"):
 		mstate_nice = m.get_state_display_name()
-	info += "[b]State:[/b] %s (%s)\n" % [mstate_caps, mstate_nice]
+	info += "[b]State:[/b] %s\n" % [mstate_nice]
 	info += "[b]Walk Speed:[/b] %.1f m/s | [b]Vision:[/b] %.1f m\n" % [m.walk_speed, m.vision_range]
 	info += "[b]Diet:[/b] " + ", ".join(m.get_preferred_diet())
+	return info
+
+func _format_bird_info(b: Bird) -> String:
+	var age_text = "%.1f / %.1f days" % [b.current_age, b.max_age]
+	var health_text = "%.1f%%" % (b.healthPercentage * 100.0)
+	var info = "[b]%s[/b]\n\n" % b.species_name
+	info += "[b]Age:[/b] %s\n" % age_text
+	info += "[b]Health:[/b] %s\n" % health_text
+	var bstate_nice := "Unknown"
+	if b.has_method("get_state_display_name"):
+		bstate_nice = b.get_state_display_name()
+	info += "[b]State:[/b] %s\n" % [bstate_nice]
+	info += "[b]Fly Speed:[/b] %.1f m/s | [b]Vision:[/b] %.1f m\n" % [b.fly_speed, b.vision_range]
+	info += "[b]Diet:[/b] " + ", ".join(b.get_preferred_diet())
 	return info
 
 func _show_mammal_info(m: Mammal, mouse_pos: Vector2):
@@ -1258,6 +1560,22 @@ func _show_mammal_info(m: Mammal, mouse_pos: Vector2):
 	if popup_pos.y < 0:
 		popup_pos.y = mouse_pos.y + 20
 	tree_info_label.text = _format_mammal_info(m)
+	tree_info_popup.position = popup_pos
+	tree_info_popup.popup()
+	if popup_update_timer:
+		popup_update_timer.start()
+
+func _show_bird_info(b: Bird, mouse_pos: Vector2):
+	if not tree_info_popup or not tree_info_label:
+		return
+	currently_inspected_bird = b
+	var popup_pos = mouse_pos + Vector2(20, -tree_info_popup.size.y - 20)
+	var screen_size = get_viewport().get_visible_rect().size
+	if popup_pos.x + tree_info_popup.size.x > screen_size.x:
+		popup_pos.x = screen_size.x - tree_info_popup.size.x - 10
+	if popup_pos.y < 0:
+		popup_pos.y = mouse_pos.y + 20
+	tree_info_label.text = _format_bird_info(b)
 	tree_info_popup.position = popup_pos
 	tree_info_popup.popup()
 	if popup_update_timer:
@@ -1289,22 +1607,14 @@ func _format_smallplant_info(p: SmallPlant) -> String:
 	var health_text = "%.1f%%" % (p.healthPercentage * 100.0)
 	var actual_altitude = p.global_position.y
 	var min_altitude = p.min_viable_altitude
-	var ideal_altitude = p.ideal_altitude
 	var max_altitude = p.max_viable_altitude
-	var altitude_color: String
-	if actual_altitude < min_altitude or actual_altitude > max_altitude:
-		altitude_color = "[color=red]"
-	elif abs(actual_altitude - ideal_altitude) <= abs(actual_altitude - min_altitude) and abs(actual_altitude - ideal_altitude) <= abs(actual_altitude - max_altitude):
-		altitude_color = "[color=green]"
-	else:
-		altitude_color = "[color=yellow]"
-	var actual_altitude_text = "%s%.1f m[/color]" % [altitude_color, actual_altitude]
-	var altitude_range_text = "%.1f/%.1f/%.1f m" % [min_altitude, ideal_altitude, max_altitude]
+	var actual_altitude_text = "%.1f m" % [actual_altitude]
+	var altitude_range_text = "%.1f/%.1f m" % [min_altitude, max_altitude]
 	var info = "[b]%s[/b]\n\n" % p.species_name
 	info += "[b]Age:[/b] %s\n" % age_text
 	info += "[b]Health:[/b] %s\n" % health_text
 	info += "[b]Current Altitude:[/b] %s\n" % actual_altitude_text
-	info += "[b]Altitude Range (Min/Ideal/Max):[/b] %s" % altitude_range_text
+	info += "[b]Altitude Range (Min/Max):[/b] %s" % altitude_range_text
 	return info
 
 func _show_smallplant_info(p: SmallPlant, mouse_pos: Vector2):
@@ -1329,24 +1639,16 @@ func _format_tree_info(tree: TreeBase) -> String:
 	var growth_progress_text = "%.1f%%" % (tree.growth_progress / tree.max_growth_progress * 100.0)
 	var actual_altitude = tree.global_position.y
 	var min_altitude = tree.min_viable_altitude
-	var ideal_altitude = tree.ideal_altitude
 	var max_altitude = tree.max_viable_altitude
-	var altitude_color: String
-	if actual_altitude < min_altitude or actual_altitude > max_altitude:
-		altitude_color = "[color=red]"
-	elif abs(actual_altitude - ideal_altitude) <= abs(actual_altitude - min_altitude) and abs(actual_altitude - ideal_altitude) <= abs(actual_altitude - max_altitude):
-		altitude_color = "[color=green]"
-	else:
-		altitude_color = "[color=yellow]"
-	var actual_altitude_text = "%s%.1f m[/color]" % [altitude_color, actual_altitude]
-	var altitude_range_text = "%.1f/%.1f/%.1f m" % [min_altitude, ideal_altitude, max_altitude]
+	var actual_altitude_text = "%.1f m" % [actual_altitude]
+	var altitude_range_text = "%.1f/%.1f m" % [min_altitude, max_altitude]
 	var info = "[b]%s[/b]\n\n" % tree.species_name
 	info += "[b]Age:[/b] %s\n" % age_text
 	info += "[b]Health:[/b] %s\n" % health_text
-	info += "[b]Status:[/b] %s\n" % tree.get_state_name()
+	info += "[b]State:[/b] %s\n" % tree.get_state_name()
 	info += "[b]Growth Progress:[/b] %s\n" % growth_progress_text
 	info += "[b]Current Altitude:[/b] %s\n" % actual_altitude_text
-	info += "[b]Altitude Range (Min/Ideal/Max):[/b] %s" % altitude_range_text
+	info += "[b]Altitude Range (Min/Max):[/b] %s" % altitude_range_text
 	return info
 
 func _update_popup_info():
@@ -1357,11 +1659,14 @@ func _update_popup_info():
 		tree_info_label.text = _format_smallplant_info(currently_inspected_plant)
 	elif currently_inspected_mammal and tree_info_label and tree_info_popup and tree_info_popup.visible:
 		tree_info_label.text = _format_mammal_info(currently_inspected_mammal)
+	elif currently_inspected_bird and tree_info_label and tree_info_popup and tree_info_popup.visible:
+		tree_info_label.text = _format_bird_info(currently_inspected_bird)
 
 func _on_popup_hide():
 	currently_inspected_tree = null
 	currently_inspected_plant = null
 	currently_inspected_mammal = null
+	currently_inspected_bird = null
 	if popup_update_timer:
 		popup_update_timer.stop()
 
@@ -1383,5 +1688,9 @@ func _is_mouse_over_ui(mouse_position: Vector2) -> bool:
 	if plants_selection_popup and plants_selection_popup.visible:
 		var plants_popup_rect = plants_selection_popup.get_visible_rect()
 		if plants_popup_rect.has_point(mouse_position):
+			return true
+	if birds_selection_popup and birds_selection_popup.visible:
+		var birds_popup_rect = birds_selection_popup.get_visible_rect()
+		if birds_popup_rect.has_point(mouse_position):
 			return true
 	return false

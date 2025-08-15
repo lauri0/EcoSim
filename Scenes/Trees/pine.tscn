@@ -10,12 +10,10 @@ height = 6.6
 radius = 0.4
 
 [node name="Pine" instance=ExtResource("1_b4vra")]
-max_growth_progress = 1.5
-ideal_seed_gen_interval = 0.4
-ideal_seed_maturation_interval = 0.4
-seed_spawn_point = Vector3(0, 4.8, 0)
+max_growth_progress = 0.5
+seed_spawn_point = Vector3(0, 6.8, 0)
 seed_type = "cone"
-seed_size = 0.2
+seed_size = 0.1
 seed_mass = 0.005
 seed_value = 4
 min_viable_altitude = 4.0

@@ -20,12 +20,14 @@ class ExploringForTreesState:
 		mammal.forage_check_timer -= dt
 		if mammal.forage_check_timer <= 0.0:
 			mammal.forage_check_timer = 2.0
-			# Only target trees that currently have a consumable seed
-			mammal.food_target = mammal._find_tree_with_seed_in_range(mammal.global_position, mammal.vision_range)
-			if is_instance_valid(mammal.food_target):
-				mammal._set_move_target(mammal.food_target.global_position)
-				mammal.switch_state("moving_to_food")
-				return
+			# Only target trees when the diet explicitly includes TreeSeed
+			if mammal.diet.has("TreeSeed"):
+				# Only target trees that currently have a consumable seed
+				mammal.food_target = mammal._find_tree_with_seed_in_range(mammal.global_position, mammal.vision_range)
+				if is_instance_valid(mammal.food_target):
+					mammal._set_move_target(mammal.food_target.global_position)
+					mammal.switch_state("moving_to_food")
+					return
 		if mammal._has_target:
 			mammal._tick_navigation(dt)
 			mammal._play_state_anim("exploring")
@@ -58,9 +60,13 @@ class MovingToFoodForTree:
 			mammal.forage_check_timer = 2.0
 			# If the target no longer has a seed, abandon and search again
 			if not mammal._tree_has_seed(mammal.food_target):
-				mammal.food_target = mammal._find_tree_with_seed_in_range(mammal.global_position, mammal.vision_range)
-				if is_instance_valid(mammal.food_target):
-					mammal._set_move_target(mammal.food_target.global_position)
+				if mammal.diet.has("TreeSeed"):
+					mammal.food_target = mammal._find_tree_with_seed_in_range(mammal.global_position, mammal.vision_range)
+					if is_instance_valid(mammal.food_target):
+						mammal._set_move_target(mammal.food_target.global_position)
+					else:
+						mammal.switch_state("exploring")
+						return
 				else:
 					mammal.switch_state("exploring")
 					return
@@ -156,7 +162,10 @@ class ClimbDownState:
 				mammal.switch_state("resting")
 			else:
 				# Seek next tree with seed
-				mammal.food_target = mammal._find_tree_with_seed_in_range(mammal.global_position, mammal.vision_range)
+				if mammal.diet.has("TreeSeed"):
+					mammal.food_target = mammal._find_tree_with_seed_in_range(mammal.global_position, mammal.vision_range)
+				else:
+					mammal.food_target = null
 				if is_instance_valid(mammal.food_target):
 					mammal._set_move_target(mammal.food_target.global_position)
 					mammal.switch_state("moving_to_food")
