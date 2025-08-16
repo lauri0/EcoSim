@@ -12,6 +12,7 @@ blocking_radius = 2.0
 needs_free_radius = 2.5
 species_name = "BerryBush"
 price = 4
+max_hp = 20
 max_age = 3.0
 
 [node name="Model" type="Node3D" parent="."]

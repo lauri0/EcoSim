@@ -1,4 +1,4 @@
-extends Plant
+extends "res://Scripts/Plant.gd"
 class_name SmallPlant
 
 # Small plants are simple lifeforms that do not grow in stages.

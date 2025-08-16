@@ -1812,7 +1812,7 @@ func _find_fish_in_hierarchy(node: Node) -> Fish:
 
 func _format_mammal_info(m: Mammal) -> String:
 	var age_text = "%.1f / %.1f days" % [m.current_age, m.max_age]
-	var health_text = "%.1f%%" % (m.healthPercentage * 100.0)
+	var health_text = "%d / %d HP" % [m.current_hp, m.max_hp]
 	var info = "[b]%s[/b]\n\n" % m.species_name
 	info += "[b]Age:[/b] %s\n" % age_text
 	info += "[b]Health:[/b] %s\n" % health_text
@@ -1826,7 +1826,7 @@ func _format_mammal_info(m: Mammal) -> String:
 
 func _format_bird_info(b: Bird) -> String:
 	var age_text = "%.1f / %.1f days" % [b.current_age, b.max_age]
-	var health_text = "%.1f%%" % (b.healthPercentage * 100.0)
+	var health_text = "%d / %d HP" % [b.current_hp, b.max_hp]
 	var info = "[b]%s[/b]\n\n" % b.species_name
 	info += "[b]Age:[/b] %s\n" % age_text
 	info += "[b]Health:[/b] %s\n" % health_text
@@ -1840,7 +1840,7 @@ func _format_bird_info(b: Bird) -> String:
 
 func _format_fish_info(f: Fish) -> String:
 	var age_text = "%.1f / %.1f days" % [f.current_age, f.max_age]
-	var health_text = "%.1f%%" % (f.healthPercentage * 100.0)
+	var health_text = "%d / %d HP" % [f.current_hp, f.max_hp]
 	var info = "[b]%s[/b]\n\n" % f.species_name
 	info += "[b]Age:[/b] %s\n" % age_text
 	info += "[b]Health:[/b] %s\n" % health_text
@@ -1923,7 +1923,7 @@ func _show_tree_info(tree: TreeBase, mouse_pos: Vector2):
 
 func _format_smallplant_info(p: SmallPlant) -> String:
 	var age_text = "%.1f / %.1f days" % [p.current_age, p.max_age]
-	var health_text = "%.1f%%" % (p.healthPercentage * 100.0)
+	var health_text = "%d / %d HP" % [p.current_hp, p.max_hp]
 	var actual_altitude = p.global_position.y
 	var min_altitude = p.min_viable_altitude
 	var max_altitude = p.max_viable_altitude
@@ -1954,7 +1954,7 @@ func _show_smallplant_info(p: SmallPlant, mouse_pos: Vector2):
 
 func _format_tree_info(tree: TreeBase) -> String:
 	var age_text = "%.1f / %.1f days" % [tree.current_age, tree.max_age]
-	var health_text = "%.1f%%" % (tree.healthPercentage * 100.0)
+	var health_text = "%d / %d HP" % [tree.current_hp, tree.max_hp]
 	var growth_progress_text = "%.1f%%" % (tree.growth_progress / tree.max_growth_progress * 100.0)
 	var actual_altitude = tree.global_position.y
 	var min_altitude = tree.min_viable_altitude

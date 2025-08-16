@@ -1,10 +1,12 @@
-extends LifeForm
+extends "res://Scripts/LifeForm.gd"
 class_name Animal
 
 # Movement parameters (units per second)
 @export var walk_speed: float = 2.0
 @export var swim_speed: float = 1.5
 @export var fly_speed: float = 0.0
+
+@export var eating_damage: int = 20
 
 # Perception
 @export var vision_range: float = 20.0
@@ -34,6 +36,16 @@ func prefers_prey_of_type(type_name: String) -> bool:
 
 func get_preferred_diet() -> Array[String]:
 	return diet
+
+# Determines if this animal can validly hunt the specified target according to rules
+# Currently enforces: when target is an Animal, we must be able to deal at least its remaining HP in one bite
+func can_hunt_target(target: Node) -> bool:
+	if not is_instance_valid(target):
+		return false
+	if target is Animal:
+		var prey: Animal = target as Animal
+		return eating_damage >= prey.current_hp
+	return true
 
 # Find the nearest edible plant in range, based on class_name/species_name matching
 func find_food_in_range(center: Vector3, search_range: float) -> Node3D:

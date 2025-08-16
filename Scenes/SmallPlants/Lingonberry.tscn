@@ -19,6 +19,7 @@ required_neighbors = Array[String](["Pine"])
 neighbor_range = 8.0
 species_name = "Lingonberry"
 price = 5
+max_hp = 20
 max_age = 8.0
 
 [node name="Model" type="Node3D" parent="."]

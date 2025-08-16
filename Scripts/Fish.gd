@@ -1,4 +1,4 @@
-extends Animal
+extends "res://Scripts/Animal.gd"
 class_name Fish
 
 # Fish-specific movement and setup
@@ -87,13 +87,17 @@ class FeedingState:
 		if fish._feeding_timer > 0.0:
 			return
 		if is_instance_valid(fish.food_target):
-			if fish.food_target.has_method("consume"):
+			# Damage lifeforms; destroy only on HP <= 0
+			if fish.food_target is LifeForm:
+				var lf: LifeForm = fish.food_target as LifeForm
+				lf.apply_damage(fish.eating_damage)
+				fish._reward_for_eating(lf)
+				fish._eaten_today += 1
+			# Fallback consume for non-lifeforms
+			elif fish.food_target.has_method("consume"):
 				fish.food_target.consume()
 			else:
 				fish.food_target.queue_free()
-			if fish.food_target is LifeForm:
-				fish._reward_for_eating(fish.food_target as LifeForm)
-				fish._eaten_today += 1
 			fish.food_target = null
 		# Look again after eating
 		fish.food_target = fish.find_food_in_range(fish.global_position, fish.vision_range)

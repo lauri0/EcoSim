@@ -1,4 +1,4 @@
-extends Animal
+extends "res://Scripts/Animal.gd"
 class_name Mammal
 
 ## -------------------- State Machine Core --------------------
@@ -85,15 +85,32 @@ class FeedingState:
 		mammal._play_state_anim("feeding")
 		if mammal._feeding_timer > 0.0:
 			return
-		# Consume the current food target and then look again
+		# Apply damage-based eating, with special cases for berries and trees
 		if is_instance_valid(mammal.food_target):
-			if mammal.food_target.has_method("consume"):
-				mammal.food_target.consume()
-			else:
-				mammal.food_target.queue_free()
-			if mammal.food_target is LifeForm:
-				mammal._reward_for_eating(mammal.food_target as LifeForm)
+			# Berry bushes: consume only the berry, award berry value
+			if mammal.food_target is BerryBush:
+				var b: BerryBush = mammal.food_target as BerryBush
+				b.consume_berry()
+				# Award berry revenue to eater and plant species
+				var root = mammal.get_tree().current_scene
+				var top_right = root.find_child("TopRightPanel", true, false)
+				if top_right and top_right.has_method("add_species_revenue"):
+					var value: int = int(b.berry_value) if "berry_value" in b else 0
+					if value > 0:
+						top_right.add_species_revenue(mammal.species_name, value, "animal")
+						top_right.add_species_revenue(b.species_name, value, "plant")
 				mammal._eaten_today += 1
+			# Generic lifeforms: deal HP damage; destroy only if HP <= 0
+			elif mammal.food_target is LifeForm:
+				var lf: LifeForm = mammal.food_target as LifeForm
+				lf.apply_damage(mammal.eating_damage)
+				mammal._reward_for_eating(lf)
+				mammal._eaten_today += 1
+			# Fallback for non-lifeforms
+			elif mammal.food_target.has_method("consume"):
+				mammal.food_target.consume()
+			elif not (mammal.food_target is TreeBase):
+				mammal.food_target.queue_free()
 			mammal.food_target = null
 		# After eating, look again
 		mammal.food_target = mammal.find_food_in_range(mammal.global_position, mammal.vision_range)

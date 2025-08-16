@@ -1,4 +1,4 @@
-extends Plant
+extends "res://Scripts/Plant.gd"
 class_name TreeBase
 
 # Tree state enum
@@ -239,16 +239,12 @@ func _update_growth(delta: float):
 	# Safety clamp to ensure state_percentage never exceeds 100%
 	state_percentage = clamp(state_percentage, 0.0, 1.0)
 
-## _update_health now provided by Plant
-
 func _calculate_growth_rate() -> float:
 	# Base rate is 1.0 progress unit per in-game day at 100% health,
 	# expressed as days per real second
 	var base_rate_days_per_second: float = 1.0 / seconds_per_game_day
-	var health_factor = healthPercentage
+	var health_factor = get_health_fraction() if has_method("get_health_fraction") else 1.0
 	return base_rate_days_per_second * health_factor
-
-# Removed _calculate_altitude_factor() - health is now calculated directly in _update_health()
 
 func _update_scale():
 	# Only update scale periodically for performance

@@ -4,3 +4,6 @@
 
 [node name="Algae" type="Node3D"]
 script = ExtResource("1_wm2ep")
+species_name = "Algae"
+max_hp = 1
+max_age = 4.0

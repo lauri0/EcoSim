@@ -6,6 +6,7 @@
 script = ExtResource("1_lepud")
 walk_speed = 3.0
 swim_speed = 0.0
+eating_damage = 8
 vision_range = 30.0
 diet = Array[String](["Grass"])
 animation_dir = "res://Resources/Animals/Jackrabbit/3D Files/GLTF/Animations/Single/"

@@ -27,7 +27,7 @@ func _logic_update(dt: float) -> void:
 
 	# If berry missing, tick a timer and spawn when interval elapses
 	if not is_winter and not is_instance_valid(_berry_node):
-		_berry_timer += (dt / seconds_per_game_day) * clamp(healthPercentage, 0.0, 1.0)
+		_berry_timer += (dt / seconds_per_game_day) * clamp(get_health_fraction(), 0.0, 1.0)
 		if _berry_timer >= berry_interval_days:
 			_berry_timer = 0.0
 			_spawn_berry()

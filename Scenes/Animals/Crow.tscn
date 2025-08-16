@@ -7,6 +7,7 @@ script = ExtResource("1_f1")
 flight_height = 8.0
 model_scene_path = "res://Resources/Animals/Crow/3D Files/GLTF/Merged LOD/Crow_LOD_All.glb"
 fly_speed = 2.8
+eating_damage = 5
 vision_range = 25.0
 diet = Array[String](["TreeSeed", "BerryBush"])
 animation_dir = "res://Resources/Animals/Crow/3D Files/GLTF/Animations/Single/"

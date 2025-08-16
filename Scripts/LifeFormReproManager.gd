@@ -105,7 +105,7 @@ func _perform_one_reproduction(species_key: String, tmgr: Node, terrain: Node) -
 		var lf := n as LifeForm
 		if not lf:
 			continue
-		if lf.healthPercentage >= 0.5:
+		if lf.get_health_fraction() >= 0.5:
 			candidates.append(lf)
 	if candidates.is_empty():
 		return

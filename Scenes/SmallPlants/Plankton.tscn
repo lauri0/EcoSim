@@ -4,3 +4,5 @@
 
 [node name="Plankton" type="Node3D"]
 script = ExtResource("1_abcde")
+max_hp = 1
+max_age = 4.0

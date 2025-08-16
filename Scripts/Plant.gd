@@ -1,4 +1,4 @@
-extends LifeForm
+extends "res://Scripts/LifeForm.gd"
 class_name Plant
 
 # Environmental preferences and spacing
@@ -15,17 +15,12 @@ class_name Plant
 
 # Shared health update based on altitude
 func _update_health() -> void:
-	var current_altitude: float = global_position.y
-
-	healthPercentage = 1.0
-
-	if current_altitude < min_viable_altitude or current_altitude > max_viable_altitude:
-		healthPercentage = 0.0
-		return
+	# Environment health is computed on demand via get_health_fraction()
+	pass
 
 # Default reproduction: ask manager to spawn same species near this plant
 func _try_reproduce() -> void:
-	if healthPercentage < 0.5:
+	if get_health_fraction() < 0.5:
 		return
 	var root = get_tree().current_scene
 	var terrain = root.find_child("Terrain", true, false)

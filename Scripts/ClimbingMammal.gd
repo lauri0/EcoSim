@@ -1,4 +1,4 @@
-extends Mammal
+extends "res://Scripts/Mammal.gd"
 class_name ClimbingMammal
 
 # Additional climbing behavior for tree seed foragers (e.g., squirrel)

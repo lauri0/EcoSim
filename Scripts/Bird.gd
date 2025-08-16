@@ -1,4 +1,4 @@
-extends Animal
+extends "res://Scripts/Animal.gd"
 class_name Bird
 
 # Default cruising altitude above terrain while exploring (meters)
@@ -150,20 +150,22 @@ class FeedingState:
 				b.consume_berry()
 				bird._award_berry_revenue(b)
 				bird._eaten_today += 1
-			# Other animals/birds: award only if prey still valid right now
+			# Other animals/birds: deal damage; destroy only if HP <= 0
 			elif bird.food_target is Animal:
 				var a: Animal = bird.food_target as Animal
 				if is_instance_valid(a):
-					a.queue_free()
+					a.apply_damage(bird.eating_damage)
 					bird._reward_for_eating(a)
 					bird._eaten_today += 1
-			# Fallback: generic edible nodes (e.g., small plants); only if still present
+			# Fallback: generic edible nodes (e.g., small plants/lifeforms); prefer damage for lifeforms
 			else:
-				if bird.food_target.has_method("consume"):
+				if bird.food_target is LifeForm:
+					var lf: LifeForm = bird.food_target as LifeForm
+					lf.apply_damage(bird.eating_damage)
+					bird._reward_for_eating(lf)
+					bird._eaten_today += 1
+				elif bird.food_target.has_method("consume"):
 					bird.food_target.consume()
-					if bird.food_target is LifeForm:
-						bird._reward_for_eating(bird.food_target as LifeForm)
-						bird._eaten_today += 1
 				# Do not delete trees in any case
 				elif not (bird.food_target is TreeBase):
 					bird.food_target.queue_free()
@@ -549,10 +551,12 @@ func _find_prey_animal(center: Vector3, search_range: float) -> Animal:
 			# Filter by diet by type name or species name
 			var a: Animal = n as Animal
 			if diet.has("Animal") or diet.has(a.get_class()) or diet.has(a.species_name):
-				var d2 = ((a as Node3D).global_position - center).length_squared()
-				if d2 <= search_range * search_range and d2 < best_d2:
-					best = a
-					best_d2 = d2
+				# Only consider prey if we can deal at least their remaining HP in one bite
+				if eating_damage >= a.current_hp:
+					var d2 = ((a as Node3D).global_position - center).length_squared()
+					if d2 <= search_range * search_range and d2 < best_d2:
+						best = a
+						best_d2 = d2
 		for c in n.get_children():
 			if c is Node:
 				queue.append(c)
